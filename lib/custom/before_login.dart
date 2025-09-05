@@ -24,7 +24,7 @@ class BeforeLogin extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 40),
+          const SizedBox(height: 158),
 
           //로그인 안내 카드
           Center(
