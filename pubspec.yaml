@@ -60,6 +60,15 @@ flutter:
   assets:
     - assets/images/basic.png
     - assets/images/trashcan.png
+    - assets/images/emergency.png
+    - assets/images/carsound.png
+    - assets/images/fire.png
+    - assets/images/phonecall.png
+    - assets/images/door.png
+    - assets/images/bell.png
+    - assets/images/dog.png
+    - assets/images/cat.png
+    - assets/images/babycry.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:
