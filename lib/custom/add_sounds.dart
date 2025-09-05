@@ -100,103 +100,91 @@ class _AddSoundsState extends State<AddSounds> {
                     const SizedBox(height: 20),
 
                     //추가 할 이모지 부분
-                    InkWell(
-                      onTap: (){
-                        showModalBottomSheet(
-                          context: context,
-                            shape: const RoundedRectangleBorder(
-                              borderRadius:
-                                BorderRadius.vertical(top: Radius.circular(16)),
-                            ),
-                          builder: (context){
-                            return SizedBox(
-                              height: 200,
-                              child: Center(
-                                child: Text(
-                                  "여기에 select_imoji.dart 연결예정",
-                                  style: TextStyle(fontSize: 14),
-                                ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(16)),
                               ),
+                              builder: (context) {
+                                return SizedBox(
+                                  height: 200,
+                                  child: const Center(
+                                    child: Text("여기에 select_imoji.dart 연결예정",
+                                        style: TextStyle(fontSize: 14)),
+                                  ),
+                                );
+                              },
                             );
                           },
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 8),
+                          child: const Text(
+                            "추가 할 이모지 >",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87, //검정87프로
+                            ),
+                          ),
+                        ),
 
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: const [
-                            Text(
-                              "추가 할 이모지 >",
+                        // 파동 색상 선택
+                        Row(
+                          children: [
+                            const Text(
+                              "파동 색상 선택",
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.black87,
+                                color: Colors.black54, //검정 54프로
                               ),
                             ),
-                            Icon(Icons.chevron_right,
-                                size: 16, color: Colors.grey),
+                            const SizedBox(width: 6),
+
+                            // 파랑 버튼
+                            GestureDetector(
+                              onTap: () => setState(() => _selectedColor = "blue"),
+                              child: CircleAvatar(
+                                radius: 12,
+                                backgroundColor: Color(0xFFB9D0FF),
+                                child: _selectedColor == "blue"
+                                    ? const Icon(Icons.check,
+                                    size: 19, color: Color(0xFF0054FF))
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+
+                            // 초록 버튼
+                            GestureDetector(
+                              onTap: () => setState(() => _selectedColor = "green"),
+                              child: CircleAvatar(
+                                radius: 12,
+                                backgroundColor: Color(0xFFCCFFA5),
+                                child: _selectedColor == "green"
+                                    ? const Icon(Icons.check,
+                                    size: 14, color: Colors.green)
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+
+                            // 빨강 버튼
+                            GestureDetector(
+                              onTap: () => setState(() => _selectedColor = "red"),
+                              child: CircleAvatar(
+                                radius: 12,
+                                backgroundColor: Color(0xFFFFD7D4),
+                                child: _selectedColor == "red"
+                                    ? const Icon(Icons.check,
+                                    size: 14, color: Colors.red)
+                                    : null,
+                              ),
+                            ),
                           ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height:20),
-
-                    //파동 색상 선택
-                    Row(
-                      children: [
-                        const Text(
-                          "파동 색상 선택",
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-
-                        //파랑 버튼
-                        GestureDetector(
-                          onTap: (){
-                            setState(()=> _selectedColor="blue");
-                          },
-                          child: CircleAvatar(
-                            radius: 12,
-                            backgroundColor: Colors.blue.shade200,
-                            child: _selectedColor=="blue" ? const Icon(Icons.check,size:14,color:Colors.blue):null,
-                          ),
-                        ),
-                        const SizedBox(width:8),
-
-                        //초록 버튼
-                        GestureDetector(
-                          onTap: () {
-                            setState(() => _selectedColor = "green");
-                          },
-                          child: CircleAvatar(
-                            radius: 12,
-                            backgroundColor: Colors.green.shade200,
-                            child: _selectedColor == "green"
-                                ? const Icon(Icons.check,
-                                size: 14, color: Colors.green)
-                                : null,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-
-                        //빨강 버튼
-                        GestureDetector(
-                          onTap: () {
-                            setState(() => _selectedColor = "red");
-                          },
-                          child: CircleAvatar(
-                            radius: 12,
-                            backgroundColor: Colors.red.shade200,
-                            child: _selectedColor == "red"
-                                ? const Icon(Icons.check,
-                                size: 14, color: Colors.red)
-                                : null,
-                          ),
                         ),
                       ],
                     ),
