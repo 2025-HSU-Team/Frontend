@@ -238,11 +238,13 @@ class AddSoundBox extends StatelessWidget {
           width: 80,
           height: 62,
           decoration: BoxDecoration(
+            color: Colors.grey.shade300,
             border: Border.all(color: Colors.grey, width: 1.5),
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Center(
             child: Icon(Icons.add, size: 32, color: Colors.grey),
+
           ),
         ),
         const SizedBox(height: 4),
