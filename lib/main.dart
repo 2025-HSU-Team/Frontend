@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/custom/before_login.dart';
+import 'package:frontend/custom/basic_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,7 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'My Movie App',
-      home: const BeforeLogin(), //실행 시 바로 BeforeLogin 보여줌
+      home: const BasicScreen(), //실행 시 바로 BeforeLogin 보여줌
     );
   }
 }
