@@ -144,16 +144,16 @@ class BasicScreen extends StatelessWidget {
 
                     const Divider(color: Colors.black),
 
-                    // 커스텀 사운드 그리드
+                    //커스텀
                     SizedBox(
-                      height: 100, // 버튼 한 줄 높이만큼
+                      height: 100,
                       child: GridView.count(
                         crossAxisCount: 3,
                         mainAxisSpacing: 28,
                         crossAxisSpacing: 17,
                         padding: EdgeInsets.zero,
                         children: const [
-                          AddSoundBox(), // ✅ 처음엔 하나만
+                          AddSoundBox(),
                         ],
                       ),
                     ),
@@ -166,7 +166,7 @@ class BasicScreen extends StatelessWidget {
         ],
       ),
 
-      // 하단 재사용할 거 (성훈이 코드 받으면 여기에 넣을 예정)
+      //하단 재사용할 거 (성훈이 코드 받으면 여기에 넣을 예정)
       // bottomNavigationBar: BottomBar(
       //   currentIndex:0,
       //   onTap(index){
@@ -225,7 +225,7 @@ class SoundBox extends StatelessWidget {
   }
 }
 
-// 소리 추가 버튼
+//소리 추가 버튼
 class AddSoundBox extends StatelessWidget {
   const AddSoundBox({super.key});
 
