@@ -7,7 +7,7 @@ class BeforeLogin extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue.shade50,
+      backgroundColor: const Color(0xFFD4E2FF),
       body: Column(
         children: [
           const SizedBox(height: 60),

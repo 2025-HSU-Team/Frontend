@@ -6,20 +6,34 @@ class BasicScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue.shade50,
-      body: Column(
+      backgroundColor: const Color(0xFFD4E2FF),
+      body: Stack(
         children: [
-          const SizedBox(height: 60),
-
-          // 상단 로고만 표시
-          Center(
-            child: ClipOval(
-              child: Image.asset(
-                'assets/images/basic.png',
-                width: 55,
-                height: 55,
-                fit: BoxFit.cover,
+          // 상단 로고 (가운데 정렬)
+          Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 44),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/basic.png',
+                  width: 55,
+                  height: 55,
+                  fit: BoxFit.cover,
+                ),
               ),
+            ),
+          ),
+
+          // 쓰레기통 (오른쪽 상단)
+          Positioned(
+            top: 91,
+            right: 21,
+            child: Image.asset(
+              'assets/images/trashcan.png',
+              width: 40,
+              height: 41,
+              fit: BoxFit.contain,
             ),
           ),
         ],
