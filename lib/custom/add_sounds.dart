@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math'; //파형 계산용 함수
 
 class AddSounds extends StatefulWidget {
   const AddSounds({super.key});
@@ -11,6 +12,7 @@ class _AddSoundsState extends State<AddSounds> {
   final TextEditingController _controller = TextEditingController();
   bool _isNotEmpty = false; //입력 여부 상태 저장
   String _selectedColor = "blue"; //기본 색상 파란색
+  bool _isRecording = false; //마이크 버튼 상태(false=기본, true=녹음 중)
 
   @override
   void initState() {
@@ -84,7 +86,9 @@ class _AddSoundsState extends State<AddSounds> {
                       controller: _controller,
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: _isNotEmpty ? FontWeight.bold : FontWeight.normal, //입력된 글자
+                        fontWeight: _isNotEmpty
+                            ? FontWeight.bold
+                            : FontWeight.normal, //입력된 글자
                         color: Colors.black,
                       ),
                       decoration: const InputDecoration(
@@ -149,7 +153,7 @@ class _AddSoundsState extends State<AddSounds> {
                               onTap: () => setState(() => _selectedColor = "blue"),
                               child: CircleAvatar(
                                 radius: 12,
-                                backgroundColor: Color(0xFFB9D0FF),
+                                backgroundColor: const Color(0xFFB9D0FF),
                                 child: _selectedColor == "blue"
                                     ? const Icon(Icons.check,
                                     size: 19, color: Color(0xFF0054FF))
@@ -163,7 +167,7 @@ class _AddSoundsState extends State<AddSounds> {
                               onTap: () => setState(() => _selectedColor = "green"),
                               child: CircleAvatar(
                                 radius: 12,
-                                backgroundColor: Color(0xFFCCFFA5),
+                                backgroundColor: const Color(0xFFCCFFA5),
                                 child: _selectedColor == "green"
                                     ? const Icon(Icons.check,
                                     size: 14, color: Colors.green)
@@ -177,7 +181,7 @@ class _AddSoundsState extends State<AddSounds> {
                               onTap: () => setState(() => _selectedColor = "red"),
                               child: CircleAvatar(
                                 radius: 12,
-                                backgroundColor: Color(0xFFFFD7D4),
+                                backgroundColor: const Color(0xFFFFD7D4),
                                 child: _selectedColor == "red"
                                     ? const Icon(Icons.check,
                                     size: 14, color: Colors.red)
@@ -188,6 +192,109 @@ class _AddSoundsState extends State<AddSounds> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 60),
+
+                    // ✅ 마이크 + 파형 Stack
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // 마이크 아이콘 (뒤)
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color(0xFFD4E2FF),
+                          ),
+                          child: Center(
+                            child: Image.asset(
+                              'assets/images/mike.png',
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+
+                        // 파형 (앞)
+                        if (_isRecording)
+                          CustomPaint(
+                            size: const Size(328, 120),
+                            painter: WavePainter(_selectedColor),
+                          ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 30),
+
+                    //녹음 빨간 버튼
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _isRecording = !_isRecording;
+                        });
+                      },
+                      child: Container(
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white, //바깥 흰색 원
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            width: _isRecording ? 32 : 32,
+                            height: _isRecording ? 32 : 32,
+                            decoration: BoxDecoration(
+                              color: const Color(0xffff1100),
+                              shape: _isRecording
+                                  ? BoxShape.rectangle
+                                  : BoxShape.circle,
+                              borderRadius: _isRecording
+                                  ? BorderRadius.circular(6)
+                                  : null,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+
+                    //소리 저장하기 버튼
+                    SizedBox(
+                      width: 127,
+                      height: 42,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6497FF), // 버튼 색
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(50), // 살짝 둥글게
+                          ),
+                        ),
+                        onPressed: () {
+                          // TODO: 소리 저장 기능 구현
+                        },
+                        child: const Text(
+                          "소리 저장하기",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            height: 1.20,
+                            letterSpacing: -0.35,
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -195,16 +302,34 @@ class _AddSoundsState extends State<AddSounds> {
           ),
         ],
       ),
-
-      //하단 재사용할 거 (성훈이 코드 받으면 여기에 넣을 예정)
-      //bottomNavigationBar: BottomBar(
-      //   currentIndex: 0,
-      //   onTap(index) {
-      //     //
-      //   }
-      // ),
     );
   }
 }
 
+//파형 CustomPainter
+class WavePainter extends CustomPainter {
+  final String color;
+  WavePainter(this.color);
 
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color == "blue"
+          ? Colors.blue
+          : color == "green"
+          ? Colors.green
+          : Colors.red
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    final path = Path();
+    for (double x = 0; x < size.width; x++) {
+      double y = size.height / 2 + 20 * sin(x / 10);
+      path.lineTo(x, y);
+    }
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
