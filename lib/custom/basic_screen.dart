@@ -205,7 +205,7 @@ class SoundBox extends StatelessWidget {
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
             border: Border.all(color: color, width: 1.5),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Center(
             child: Image.asset(image, width: 30, height: 30),
@@ -237,7 +237,7 @@ class AddSoundBox extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
     InkWell(
-    borderRadius: BorderRadius.circular(12), // 터치 영역 둥글게
+    borderRadius: BorderRadius.circular(16), // 터치 영역 둥글게
     onTap: () {
     Navigator.push(
     context,
@@ -250,7 +250,7 @@ class AddSoundBox extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.grey.shade300,
             border: Border.all(color: Colors.grey, width: 1.5),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
           child: const Center(
             child: Icon(Icons.add, size: 32, color: Colors.grey),
