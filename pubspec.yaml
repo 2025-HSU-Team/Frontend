@@ -58,6 +58,9 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/images/logo.png
+    - assets/images/sosaw.png
+    - assets/images/kakao.png
     - assets/images/basic.png
     - assets/images/trashcan.png
     - assets/images/emergency.png
