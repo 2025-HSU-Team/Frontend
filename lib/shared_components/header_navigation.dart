@@ -69,11 +69,14 @@ class HeaderNavigation extends StatelessWidget {
 
   Widget _buildLogo() {
     return FutureBuilder<AssetBundleImageKey>(
-      future: const AssetImage('assets/images/Icon.png').obtainKey(const ImageConfiguration()),
+      future: const AssetImage(
+        'assets/Icon.png',
+      ).obtainKey(const ImageConfiguration()),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+        if (snapshot.connectionState == ConnectionState.done &&
+            snapshot.hasData) {
           return Image.asset(
-            'assets/images/Icon.png',
+            'assets/Icon.png',
             width: 80,
             height: 80,
             fit: BoxFit.contain,
