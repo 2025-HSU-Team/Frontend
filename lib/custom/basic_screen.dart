@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'add_sounds.dart';
+
 
 class BasicScreen extends StatelessWidget {
   const BasicScreen({super.key});
@@ -234,7 +236,15 @@ class AddSoundBox extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
+    InkWell(
+    borderRadius: BorderRadius.circular(12), // 터치 영역 둥글게
+    onTap: () {
+    Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => const AddSounds()), //누르면 소리 추가하기 화면으로 넘어감
+    );
+    },
+        child:Container(
           width: 80,
           height: 62,
           decoration: BoxDecoration(
@@ -245,6 +255,7 @@ class AddSoundBox extends StatelessWidget {
           child: const Center(
             child: Icon(Icons.add, size: 32, color: Colors.grey),
 
+          ),
           ),
         ),
         const SizedBox(height: 4),

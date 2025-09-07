@@ -15,7 +15,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'My Movie App',
-      home: const AddSounds(), //실행 시 바로 BeforeLogin 보여줌
+      home: const BasicScreen(), //실행 시 바로 BeforeLogin 보여줌
     );
   }
 }
