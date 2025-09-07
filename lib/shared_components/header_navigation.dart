@@ -19,12 +19,7 @@ class HeaderNavigation extends StatelessWidget {
       child: Column(
         children: [
           // 앱 아이콘
-          Image.asset(
-            'assets/images/Icon.png',
-            width: 80,
-            height: 80,
-            fit: BoxFit.contain,
-          ),
+          _buildLogo(),
 
           const SizedBox(height: 20),
 
@@ -69,6 +64,33 @@ class HeaderNavigation extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLogo() {
+    return FutureBuilder<AssetBundleImageKey>(
+      future: const AssetImage('assets/images/Icon.png').obtainKey(const ImageConfiguration()),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+          return Image.asset(
+            'assets/images/Icon.png',
+            width: 80,
+            height: 80,
+            fit: BoxFit.contain,
+          );
+        }
+        // Fallback: simple icon if asset not found or while loading
+        return Container(
+          width: 80,
+          height: 80,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.blue[50],
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.hearing, color: Colors.blue, size: 40),
+        );
+      },
     );
   }
 }

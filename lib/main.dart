@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'pages/mainPage/mainPage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -38,9 +39,17 @@ class MyApp extends StatelessWidget {
               Container(
                 width: double.infinity, //애뮬레이터 크기에 맞게 최대 크기만큼
                 margin: const EdgeInsets.only(top: 16), // 위쪽에만 여백 16
-                child: ElevatedButton(
-                  onPressed: () {},
-                  child: Text('로그인'),
+                child: Builder(
+                  builder: (context) => ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => const MainPage(),
+                        ),
+                      );
+                    },
+                    child: Text('로그인'),
+                  ),
                 ),
               )
             ],

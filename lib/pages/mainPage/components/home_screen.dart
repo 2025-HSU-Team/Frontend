@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/shared_components/bottom_navigation.dart';
-import 'package:frontend/shared_components/header_navigation.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,49 +8,12 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedTabIndex = 0;
-  int _selectedCategoryIndex = 0;
-
-  final List<String> _categories = ['일상생활', '콘서트', '연극'];
-
-  void _onCategoryChanged(int index) {
-    setState(() {
-      _selectedCategoryIndex = index;
-    });
-  }
-
-  void _onTabChanged(int index) {
-    setState(() {
-      _selectedTabIndex = index;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 헤더 네비게이션
-            HeaderNavigation(
-              selectedCategoryIndex: _selectedCategoryIndex,
-              onCategoryChanged: _onCategoryChanged,
-              categories: _categories,
-            ),
-
-            // 메인 콘텐츠 영역
-            Expanded(child: _buildMainContent()),
-
-            // 하단 네비게이션
-            BottomNavigation(
-              selectedTabIndex: _selectedTabIndex,
-              onTabChanged: _onTabChanged,
-            ),
-          ],
-        ),
-      ),
-    );
+    // NOTE: This widget returns only the main content.
+    // Header and Bottom navigations are provided by MainPage.
+    return _buildMainContent();
   }
 
   Widget _buildMainContent() {
