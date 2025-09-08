@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'withoutlogin.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,7 +18,7 @@ class _LoginScreenState extends State<LoginScreen>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 5),
+      duration: const Duration(seconds: 4),
     )..repeat(); //무한 반복
   }
 
@@ -144,10 +145,13 @@ class _LoginScreenState extends State<LoginScreen>
 
             const SizedBox(height: 16),
 
-            //로그인 없이 이용하기
+            // 로그인 없이 이용하기
             GestureDetector(
               onTap: () {
-                // TODO: 로그인 없이 진입
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const WithoutScreen()),
+                );
               },
               child: const Text(
                 "로그인 없이 서비스 이용하기 >",
@@ -155,11 +159,12 @@ class _LoginScreenState extends State<LoginScreen>
                   fontSize: 12,
                   color: Colors.black54,
                   decoration: TextDecoration.underline,
-                  decorationThickness: 1.2, //밑줄 커스텀
-                  decorationColor: Colors.black54,//밑줄 커스텀
+                  decorationThickness: 1.2,
+                  decorationColor: Colors.black54,
                 ),
               ),
             ),
+
           ],
         ),
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/app_config.dart';
+import 'package:frontend/login/login.dart';
 
 class BeforeLogin extends StatelessWidget {
   const BeforeLogin({super.key});
@@ -58,7 +59,12 @@ class BeforeLogin extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppConfig.mainColor,
                       minimumSize: const Size(120, 40),

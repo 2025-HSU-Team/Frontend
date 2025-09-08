@@ -5,6 +5,7 @@ import 'package:frontend/custom/basic_screen.dart';
 import 'package:frontend/custom/delete_screen.dart';
 import 'package:frontend/login/splash_screen.dart';
 import 'package:frontend/login/login.dart';
+import 'package:frontend/login/withoutlogin.dart';
 
 void main() {
   runApp(const MyApp());
