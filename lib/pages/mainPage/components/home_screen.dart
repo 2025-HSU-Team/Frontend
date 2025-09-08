@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:typed_data';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,6 +14,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  bool _isSoundDetected = false;
+  FlutterSoundRecorder? _recorder;
+  StreamSubscription? _recorderSub;
+  StreamController<Uint8List>? _audioController;
+  static const double _dbThreshold = 60; // dB 임계값
 
   @override
   void initState() {
@@ -17,13 +26,47 @@ class _HomeScreenState extends State<HomeScreen>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
-    )..repeat();
+    );
+    _audioController = StreamController<Uint8List>();
+    _initMic();
   }
 
   @override
   void dispose() {
+    _recorderSub?.cancel();
+    _recorder?.closeRecorder();
+    _audioController?.close();
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _initMic() async {
+    final status = await Permission.microphone.request();
+    if (!status.isGranted) return;
+    _recorder = FlutterSoundRecorder();
+    await _recorder!.openRecorder();
+    await _recorder!.setSubscriptionDuration(const Duration(milliseconds: 200));
+    _recorderSub = _recorder!.onProgress?.listen((event) {
+      final db = event.decibels ?? 0.0;
+      final detected = db > _dbThreshold;
+      if (detected != _isSoundDetected) {
+        setState(() {
+          _isSoundDetected = detected;
+          if (_isSoundDetected) {
+            _controller.repeat();
+          } else {
+            _controller.stop();
+            _controller.value = 0.0;
+          }
+        });
+      }
+    });
+    await _recorder!.startRecorder(
+      toStream: _audioController!.sink,
+      codec: Codec.pcm16,
+      numChannels: 1,
+      sampleRate: 16000,
+    );
   }
 
   @override
@@ -35,40 +78,55 @@ class _HomeScreenState extends State<HomeScreen>
 
   Widget _buildMainContent() {
     return Center(
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          final double t = _controller.value; // 0.0 → 1.0 반복
-          return SizedBox(
-            width: double.infinity,
-            height: 500,
-            child: Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
-              children: [
-                // 3개의 원형 파동을 위상 차이를 두고 반복적으로 확장
-                _buildPulseRing((t + 0.0) % 1.0),
-                _buildPulseRing((t + 0.33) % 1.0),
-                _buildPulseRing((t + 0.66) % 1.0),
-
-                // 중앙 고정 원 (애니메이션과 독립적으로 항상 고정)
-                _buildCenterCircle(),
-
-                // 중앙 아이콘 이미지
-                _buildCenterIcon(),
-
-                // 상태 텍스트 (선택)
-                Positioned(
-                  bottom: -60,
-                  child: Text(
-                    '소리를 분석하고 있습니다...',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 16),
+      child: GestureDetector(
+        onTap: () {
+          // 임시 토글: 소리 감지 상태 테스트용
+          setState(() {
+            _isSoundDetected = !_isSoundDetected;
+            if (_isSoundDetected) {
+              _controller.repeat();
+            } else {
+              _controller.stop();
+              _controller.value = 0.0;
+            }
+          });
+        },
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: _isSoundDetected
+              ? AnimatedBuilder(
+                  key: const ValueKey('anim'),
+                  animation: _controller,
+                  builder: (context, _) {
+                    final double t = _controller.value; // 0.0 → 1.0 반복
+                    return SizedBox(
+                      width: double.infinity,
+                      height: 500,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        clipBehavior: Clip.none,
+                        children: [
+                          _buildPulseRing((t + 0.0) % 1.0),
+                          _buildPulseRing((t + 0.33) % 1.0),
+                          _buildPulseRing((t + 0.66) % 1.0),
+                          _buildCenterCircle(),
+                          _buildCenterIcon(),
+                        ],
+                      ),
+                    );
+                  },
+                )
+              : SizedBox(
+                  key: const ValueKey('idle'),
+                  width: 120,
+                  height: 120,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 8,
+                    backgroundColor: Colors.blue[100],
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
                   ),
                 ),
-              ],
-            ),
-          );
-        },
+        ),
       ),
     );
   }
