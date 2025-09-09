@@ -75,11 +75,12 @@ flutter:
     - assets/images/cat.png
     - assets/images/babycry.png
     - assets/images/mike.png
-
-  # To add assets to your application, add an assets section, like this:
-  assets:
     - assets/Icon.png
     - assets/blue/
+
+  # To add assets to your application, add an assets section, like this:
+
+
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
