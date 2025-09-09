@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'My Movie App',
-      home: const SplashScreen(),
+      home: const AddSounds(),
     );
   }
 }
