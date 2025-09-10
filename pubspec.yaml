@@ -77,6 +77,7 @@ flutter:
     - assets/images/kakao.png
     - assets/images/basic.png
     - assets/images/trashcan.png
+    - assets/images/fix.png
     - assets/images/emergency.png
     - assets/images/carsound.png
     - assets/images/fire.png

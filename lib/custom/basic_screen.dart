@@ -33,10 +33,22 @@ class BasicScreen extends StatelessWidget {
 
           //쓰레기통 (오른쪽 상단 고정)
           Positioned(
-            top: 90,
+            top: 89,
             right: 21,
             child: Image.asset(
               'assets/images/trashcan.png',
+              width: 50,
+              height: 45,
+              fit: BoxFit.contain,
+            ),
+          ),
+
+          //수정하기
+          Positioned(
+            top: 89,
+            right: 70,
+            child: Image.asset(
+              'assets/images/fix.png',
               width: 50,
               height: 45,
               fit: BoxFit.contain,

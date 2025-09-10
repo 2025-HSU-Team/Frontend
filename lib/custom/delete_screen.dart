@@ -41,6 +41,17 @@ class DeleteScreen extends StatelessWidget {
             ),
           ),
 
+          //수정하기
+          Positioned(
+            top: 89,
+            right: 70,
+            child: Image.asset(
+              'assets/images/fix.png',
+              width: 50,
+              height: 45,
+              fit: BoxFit.contain,
+            ),
+          ),
 
           //쓰레기통 밑 흰 박스
           Positioned(
