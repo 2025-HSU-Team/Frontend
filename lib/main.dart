@@ -10,6 +10,7 @@ import 'package:frontend/login/withoutlogin.dart';
 import 'pages/mainPage/mainPage.dart';
 import 'package:frontend/shared_components/bottom_navigation.dart';
 
+
 void main() {
   runApp(const MyApp());
 }
@@ -22,7 +23,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'My Movie App',
-      home: const BeforeLogin(),
+      home: const BasicScreen(),
     );
   }
 }
