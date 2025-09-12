@@ -444,7 +444,7 @@ class _AddSoundsState extends State<AddSounds> {
         ],
       ),
 
-      // ✅ 여기서 바텀 네비게이션 붙임
+      // 여기서 바텀 네비게이션 붙임
       bottomNavigationBar: BottomNavigation(
         selectedTabIndex: _selectedTabIndex,
         onTabChanged: _onTabChanged,

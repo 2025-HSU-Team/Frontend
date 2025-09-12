@@ -59,7 +59,7 @@ class DeleteScreen extends StatelessWidget {
             left: (MediaQuery.of(context).size.width - 328) / 2, //가운데 정렬
             child: Container(
               width: 328,
-              height: 539,
+              height: 580,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
@@ -72,6 +72,16 @@ class DeleteScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+
+                    const Text(
+                      "기본음",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+
+                    const Divider(color: Colors.black),
 
                     SizedBox(
                       height: 350,
@@ -127,12 +137,34 @@ class DeleteScreen extends StatelessWidget {
                             label: '아기 우는 소리',
                             color: Colors.blue,
                           ),
-
-                          //커스텀 (소리 추가 버튼)
-                          AddSoundBox(),
                         ],
                       ),
                     ),
+
+                    //커스텀
+                    const Text(
+                      "커스텀",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                          const Divider(color: Colors.black),
+
+                          SizedBox(
+                            height: 100,
+                            child: GridView.count(
+                              crossAxisCount: 3,
+                              mainAxisSpacing: 28,
+                              crossAxisSpacing: 17,
+                              padding: EdgeInsets.zero ,
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              children: const[
+                                AddSoundBox(),
+                              ],
+                            ),
+                          )
                   ],
                 ),
               ),
@@ -140,6 +172,7 @@ class DeleteScreen extends StatelessWidget {
           ),
         ],
       ),
+
 
       bottomNavigationBar: BottomNavigation(
         selectedTabIndex: 0, // "내소리" 탭이 선택된 상태

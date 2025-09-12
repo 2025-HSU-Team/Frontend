@@ -7,6 +7,7 @@ class BasicScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ScrollController _scrollController = ScrollController(); //스크롤바를 위한 선언
     return Scaffold(
       backgroundColor: const Color(0xFFD4E2FF), //배경색
       body: Stack(
@@ -71,108 +72,119 @@ class BasicScreen extends StatelessWidget {
               //흰 박스 안에 추가하는 부분
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                child: Scrollbar(
+                  controller: _scrollController, //스크롤바 컨트롤러
+                  thumbVisibility: true, //스크롤바 항상 보이게
+                  child: SingleChildScrollView(
+                    controller: _scrollController,//스크롤뷰 컨트롤러
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
 
-                    const Text(
-                      "기본음",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
+                        const Text(
+                          "기본음",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+
+                        const Divider(color: Colors.black),
+
+                        //기본음 9개
+                        SizedBox(
+                          height: 350,
+                          child: GridView.count(
+                            crossAxisCount: 3,
+                            mainAxisSpacing: 28,
+                            crossAxisSpacing: 17,
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,//전체 스크롤뷰에 맞게 줄어듦
+                            physics: const NeverScrollableScrollPhysics(),
+                            children: const [
+                              SoundBox(
+                                image: 'assets/images/emergency.png',
+                                label: '비상 경보음',
+                                color:Colors.red,
+                              ),
+
+                              SoundBox(
+                                image: 'assets/images/carsound.png',
+                                label: '자동차 경적 소리',
+                                color:Colors.red,
+                              ),
+
+                              SoundBox(
+                                image: 'assets/images/fire.png',
+                                label: '화재 경보 소리',
+                                color: Colors.red,
+                              ),
+                              SoundBox(
+                                image: 'assets/images/phonecall.png',
+                                label: '전화 벨소리',
+                                color: Colors.green,
+                              ),
+                              SoundBox(
+                                image: 'assets/images/door.png',
+                                label: '문 여닫는 소리',
+                                color: Colors.green,
+                              ),
+                              SoundBox(
+                                image: 'assets/images/bell.png',
+                                label: '초인종 소리',
+                                color: Colors.green,
+                              ),
+                              SoundBox(
+                                image: 'assets/images/dog.png',
+                                label: '개 짖는 소리',
+                                color: Colors.blue,
+                              ),
+                              SoundBox(
+                                image: 'assets/images/cat.png',
+                                label: '고양이 우는 소리',
+                                color: Colors.blue,
+                              ),
+                              SoundBox(
+                                image: 'assets/images/babycry.png',
+                                label: '아기 우는 소리',
+                                color: Colors.blue,
+                              ),
+
+
+                            ],
+                          ),
+                        ),
+
+
+                        const Text(
+                          "커스텀",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+
+
+                        const Divider(color: Colors.black),
+
+                        //커스텀
+                        SizedBox(
+                          height: 100,
+                          child: GridView.count(
+                            crossAxisCount: 3,
+                            mainAxisSpacing: 28,
+                            crossAxisSpacing: 17,
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            physics: NeverScrollableScrollPhysics(),
+                            children: const [
+                              AddSoundBox(),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-
-                    const Divider(color: Colors.black),
-
-                    //기본음 9개
-                    SizedBox(
-                      height: 350,
-                      child: GridView.count(
-                        crossAxisCount: 3,
-                        mainAxisSpacing: 28,
-                        crossAxisSpacing: 17,
-                        padding: EdgeInsets.zero,
-                        children: const [
-                          SoundBox(
-                            image: 'assets/images/emergency.png',
-                            label: '비상 경보음',
-                            color:Colors.red,
-                          ),
-
-                          SoundBox(
-                            image: 'assets/images/carsound.png',
-                            label: '자동차 경적 소리',
-                            color:Colors.red,
-                          ),
-
-                          SoundBox(
-                            image: 'assets/images/fire.png',
-                            label: '화재 경보 소리',
-                            color: Colors.red,
-                          ),
-                          SoundBox(
-                            image: 'assets/images/phonecall.png',
-                            label: '전화 벨소리',
-                            color: Colors.green,
-                          ),
-                          SoundBox(
-                            image: 'assets/images/door.png',
-                            label: '문 여닫는 소리',
-                            color: Colors.green,
-                          ),
-                          SoundBox(
-                            image: 'assets/images/bell.png',
-                            label: '초인종 소리',
-                            color: Colors.green,
-                          ),
-                          SoundBox(
-                            image: 'assets/images/dog.png',
-                            label: '개 짖는 소리',
-                            color: Colors.blue,
-                          ),
-                          SoundBox(
-                            image: 'assets/images/cat.png',
-                            label: '고양이 우는 소리',
-                            color: Colors.blue,
-                          ),
-                          SoundBox(
-                            image: 'assets/images/babycry.png',
-                            label: '아기 우는 소리',
-                            color: Colors.blue,
-                          ),
-
-
-                        ],
-                      ),
-                    ),
-
-
-                    const Text(
-                      "커스텀",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-
-
-                    const Divider(color: Colors.black),
-
-                    //커스텀
-                    SizedBox(
-                      height: 100,
-                      child: GridView.count(
-                        crossAxisCount: 3,
-                        mainAxisSpacing: 28,
-                        crossAxisSpacing: 17,
-                        padding: EdgeInsets.zero,
-                        children: const [
-                          AddSoundBox(),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
 
