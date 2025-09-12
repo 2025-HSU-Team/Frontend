@@ -18,6 +18,7 @@ class _HomeScreenState extends State<HomeScreen>
   FlutterSoundRecorder? _recorder;
   StreamSubscription? _recorderSub;
   StreamController<Uint8List>? _audioController;
+  double _currentDb = 0.0; // 현재 데시벨 값
   static const double _dbThreshold = 60; // dB 임계값
 
   @override
@@ -49,8 +50,10 @@ class _HomeScreenState extends State<HomeScreen>
     _recorderSub = _recorder!.onProgress?.listen((event) {
       final db = event.decibels ?? 0.0;
       final detected = db > _dbThreshold;
-      if (detected != _isSoundDetected) {
-        setState(() {
+      
+      setState(() {
+        _currentDb = db; // 현재 데시벨 값 업데이트
+        if (detected != _isSoundDetected) {
           _isSoundDetected = detected;
           if (_isSoundDetected) {
             _controller.repeat();
@@ -58,8 +61,8 @@ class _HomeScreenState extends State<HomeScreen>
             _controller.stop();
             _controller.value = 0.0;
           }
-        });
-      }
+        }
+      });
     });
     await _recorder!.startRecorder(
       toStream: _audioController!.sink,
@@ -116,15 +119,39 @@ class _HomeScreenState extends State<HomeScreen>
                     );
                   },
                 )
-              : SizedBox(
+              : Column(
                   key: const ValueKey('idle'),
-                  width: 120,
-                  height: 120,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 8,
-                    backgroundColor: Colors.blue[100],
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
-                  ),
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 120,
+                      height: 120,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 8,
+                        backgroundColor: Colors.blue[100],
+                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // 현재 데시벨 표시
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.blue[200]!),
+                      ),
+                      child: Text(
+                        '현재 소음: ${_currentDb.toStringAsFixed(1)} dB\n임계값: $_dbThreshold dB',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.blue[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
         ),
       ),
