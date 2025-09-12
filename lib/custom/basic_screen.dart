@@ -2,8 +2,19 @@ import 'package:flutter/material.dart';
 import 'add_sounds.dart';
 import '../shared_components/bottom_navigation.dart';
 
-class BasicScreen extends StatelessWidget {
+class BasicScreen extends StatefulWidget {
   const BasicScreen({super.key});
+
+  @override
+  State<BasicScreen> createState() => _BasicScreenState();
+}
+
+class _BasicScreenState extends State<BasicScreen> {//상태 클래스 생성
+  final ScrollController _scrollController=ScrollController(); //스크롤바를 위한
+
+  //커스텀 소리 리스트
+  List<Map<String, dynamic>> customSounds = [];
+
 
   @override
   Widget build(BuildContext context) {
@@ -81,11 +92,19 @@ class BasicScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
 
-                        const Text(
-                          "기본음",
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFE2E2E2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            "기본음",
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xFF3F3E3E),
+                            ),
                           ),
                         ),
 
@@ -177,8 +196,21 @@ class BasicScreen extends StatelessWidget {
                             padding: EdgeInsets.zero,
                             shrinkWrap: true,
                             physics: NeverScrollableScrollPhysics(),
-                            children: const [
-                              AddSoundBox(),
+                            children:  [
+                              //커스텀 리스트 출력
+                              for (final sound in customSounds)
+                                CustomSoundBox(
+                                  name:sound['name'],
+                                  emoji:sound['emoji'],
+                                  color:sound['color'],
+                                ),
+                              AddSoundBox(
+                                onSoundAdded: (res){
+                                  setState(() {
+                                    customSounds.add(res);
+                                  });
+                                }
+                              ),
                             ],
                           ),
                         ),
@@ -251,9 +283,63 @@ class SoundBox extends StatelessWidget {
   }
 }
 
+//커스텀 소리 박스 위젯
+class CustomSoundBox extends StatelessWidget {
+  final String name;
+  final String emoji;
+  final String color;
+
+  const CustomSoundBox({
+    super.key,
+    required this.name,
+    required this.emoji,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context){
+    final boxColor = color== "RED"? Colors.red:color=="GREEN"?Colors.green:Colors.blue;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 80,
+          height: 62,
+          decoration: BoxDecoration(
+            color:boxColor.withOpacity(0.1),
+            border:Border.all(color:boxColor, width:1.5),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Center(
+            child: Text(
+              emoji,
+              style: const TextStyle(fontSize: 24),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          name,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+            color:Colors.black87,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
 //소리 추가 버튼
 class AddSoundBox extends StatelessWidget {
-  const AddSoundBox({super.key});
+
+  //콜백 추가
+  final Function(Map<String,dynamic>) onSoundAdded;
+
+  const AddSoundBox({super.key,required this.onSoundAdded});
 
   @override
   Widget build(BuildContext context) {

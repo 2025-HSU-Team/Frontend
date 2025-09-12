@@ -9,6 +9,7 @@ import 'package:frontend/login/login.dart';
 import 'package:frontend/login/withoutlogin.dart';
 import 'pages/mainPage/mainPage.dart';
 import 'package:frontend/shared_components/bottom_navigation.dart';
+import 'package:frontend/alarm/alarm_set.dart';
 
 
 void main() {
@@ -23,7 +24,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'My Movie App',
-      home: const DeleteScreen(),
+      home: const AlarmSetScreen(),
     );
   }
 }
