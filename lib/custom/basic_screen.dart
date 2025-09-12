@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'add_sounds.dart';
 import '../shared_components/bottom_navigation.dart';
+import 'delete_screen.dart';
+import 'fix_screen.dart';
 
 class BasicScreen extends StatefulWidget {
   const BasicScreen({super.key});
@@ -47,11 +49,19 @@ class _BasicScreenState extends State<BasicScreen> {//상태 클래스 생성
           Positioned(
             top: 89,
             right: 21,
-            child: Image.asset(
-              'assets/images/trashcan.png',
-              width: 50,
-              height: 45,
-              fit: BoxFit.contain,
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const DeleteScreen()),
+                );
+              },
+              child: Image.asset(
+                'assets/images/trashcan.png',
+                width: 50,
+                height: 45,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
 
@@ -59,11 +69,19 @@ class _BasicScreenState extends State<BasicScreen> {//상태 클래스 생성
           Positioned(
             top: 89,
             right: 70,
-            child: Image.asset(
-              'assets/images/fix.png',
-              width: 50,
-              height: 45,
-              fit: BoxFit.contain,
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const FixScreen()),
+                );
+              },
+              child: Image.asset(
+                'assets/images/fix.png',
+                width: 50,
+                height: 45,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
 
