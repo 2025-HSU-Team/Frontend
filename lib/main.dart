@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'My Movie App',
-      home: const AlarmSetScreen(),
+      home: const BasicScreen(),
     );
   }
 }
