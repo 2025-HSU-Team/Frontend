@@ -6,6 +6,7 @@ import 'package:frontend/custom/basic_screen.dart';
 import 'package:frontend/custom/delete_screen.dart';
 import 'package:frontend/login/splash_screen.dart';
 import 'package:frontend/login/login.dart';
+import 'package:frontend/login/signup.dart';
 import 'package:frontend/login/withoutlogin.dart';
 import 'pages/mainPage/mainPage.dart';
 import 'package:frontend/shared_components/bottom_navigation.dart';
@@ -24,7 +25,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'My Movie App',
-      home: const LoginScreen(),
+      home: const SignupScreen(),
     );
   }
 }
