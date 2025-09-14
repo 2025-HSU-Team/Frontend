@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http; //http 패키지
+import 'dart:convert';
+import 'login.dart';
 import 'withoutlogin.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -17,6 +20,8 @@ class _SignupScreenState extends State<SignupScreen>
 
   String? _idError;
   String? _pwError;
+  String? _idCheckMessage; //아이디 중복 확인
+  Color _idCheckColor = Colors.blue;
 
   @override
   void initState() {
@@ -54,6 +59,91 @@ class _SignupScreenState extends State<SignupScreen>
         _pwError = "영문 소문자와 숫자의 조합으로 4~12자 이내로 입력해 주세요.";
       }
     });
+  }
+
+  //아이디 중복 확인 API
+  Future<void> _checkDuplicateId() async {
+    final id = _idController.text.trim();
+    if (id.isEmpty) {
+      setState(() {
+        _idCheckMessage = "아이디를 입력해 주세요.";
+        _idCheckColor = Colors.red;
+      });
+      return;
+    }
+
+    final url = Uri.parse("https://13.209.61.41.nip.io/api/users/signup/checkId?id=$id");
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final isDuplicated = data["data"] ?? true;
+
+        setState(() {
+          if (isDuplicated) {
+            _idCheckMessage = "해당 사용자가 이미 존재합니다.";
+            _idCheckColor = Colors.red;
+          } else {
+            _idCheckMessage = "사용 가능한 아이디입니다.";
+            _idCheckColor = Colors.blue;
+          }
+        });
+      } else {
+        setState(() {
+          _idCheckMessage = "서버 오류: ${response.statusCode}";
+          _idCheckColor = Colors.red;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _idCheckMessage = "네트워크 오류: $e";
+        _idCheckColor = Colors.red;
+      });
+    }
+  }
+
+  //회원가입 API 요청 함수
+  Future<void> _signup() async {
+    final url = Uri.parse("https://13.209.61.41.nip.io/api/users/signup");
+
+    final body = {
+      "id": _idController.text.trim(),
+      "password": _pwController.text.trim(),
+    };
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(body),
+      );
+
+      final data = jsonDecode(response.body);
+
+      //성공 조건을 statusCode == 201 또는 isSuccess == true 로 체크(201이 먼 오륜지 몰라서 201도 처리하도록)
+      if (response.statusCode == 201 && data["isSuccess"] == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("가입이 완료되었습니다.")),
+        );
+
+        Future.delayed(const Duration(seconds: 1, milliseconds: 500), () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+          );
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("회원가입 실패: ${data["message"] ?? response.body}")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("에러 발생: $e")),
+      );
+    }
   }
 
   @override
@@ -212,10 +302,10 @@ class _SignupScreenState extends State<SignupScreen>
                           suffixIcon: Padding(
                             padding: const EdgeInsets.only(right: 4),
                             child: ElevatedButton(
-                              onPressed: _validate,
+                              onPressed: _checkDuplicateId,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFD9D9D9),
-                                minimumSize: const Size(50, 20),
+                                minimumSize: const Size(54, 17),
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 6, vertical: 0),
                                 tapTargetSize:
@@ -226,14 +316,22 @@ class _SignupScreenState extends State<SignupScreen>
                               ),
                               child: const Text(
                                 "중복확인",
-                                style: TextStyle(
-                                    fontSize: 10, color: Colors.black54),
+                                style: TextStyle(fontSize: 10, color: Colors.white),
                               ),
                             ),
                           ),
                         ),
                       ),
                     ),
+                    //중복 확인 결과 메시지 표시
+                    if (_idCheckMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, left: 4),
+                        child: Text(
+                          _idCheckMessage!,
+                          style: TextStyle(fontSize: 11, color: _idCheckColor),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -296,7 +394,7 @@ class _SignupScreenState extends State<SignupScreen>
                 width: 210,
                 height: 33,
                 child: ElevatedButton(
-                  onPressed: _validate,
+                  onPressed: _signup,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFD9D9D9),
                     shape: RoundedRectangleBorder(
