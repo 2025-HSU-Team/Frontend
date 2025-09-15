@@ -33,11 +33,72 @@ class _AddSoundsState extends State<AddSounds> {
   File? _audioFile; //녹음 파일
   final AudioRecorder _recorder = AudioRecorder(); //녹음기
 
-  // 🟢 실시간 음량 값
+  //실시간 음량 값
   double _amplitude = 0;
 
   //api 베이스
   static const String _baseUrl = 'https://13.209.61.41.nip.io';
+
+  //이모지 리스트 50개
+  final List<String> _emojiList = [
+    '😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊',
+    '😋','😎','😍','😘','🥰','😗','😙','😚','🙂','🤗',
+    '🤩','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥',
+    '😮','🤐','😯','😪','😫','🥱','😴','😌','😛','😜',
+    '🤪','😝','🤑','🤠','😈','👿','👹','👺','💀','👻',
+  ];
+
+  //이모지 선택 모달
+  void _selectEmoji() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SizedBox(
+          height: 400,
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              const Text(
+                "이모지 선택",
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              ),
+              const Divider(),
+              Expanded(
+                child: GridView.builder(
+                  padding: const EdgeInsets.all(12),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 6,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                  ),
+                  itemCount: _emojiList.length,
+                  itemBuilder: (context, index) {
+                    final e = _emojiList[index];
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() => _emoji = e); //선택된 이모지 반영
+                        Navigator.pop(context); //모달 닫기
+                      },
+                      child: Center(
+                        child: Text(
+                          e,
+                          style: const TextStyle(fontSize: 28),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   void initState() {
@@ -239,88 +300,125 @@ class _AddSoundsState extends State<AddSounds> {
                         border: UnderlineInputBorder(),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
 
                     //추가 할 이모지 + 색상
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        InkWell(
-                          onTap: () {
-                            showModalBottomSheet(
-                              context: context,
-                              shape: const RoundedRectangleBorder(
-                                borderRadius:
-                                BorderRadius.vertical(top: Radius.circular(16)),
-                              ),
-                              builder: (context) {
-                                return SizedBox(
-                                  height: 200,
-                                  child: Center(
-                                    child: Text(
-                                      "이모지 선택 화면(추후 연결)\n현재: $_emoji",
-                                      style: const TextStyle(fontSize: 14),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          },
+                        // '추가한 이모지 변경하기' 버튼
+                        ElevatedButton(
+                          onPressed: _selectEmoji,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6497FF),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4), // 내부 여백 줄이기
+                            minimumSize: const Size(100, 32), // 최소 버튼 크기
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
                           child: const Text(
-                            "추가 할 이모지 >",
-                            style: TextStyle(fontSize: 12, color: Colors.black87),
+                            "추가한 이모지 변경하기",
+                            style: TextStyle(
+                              fontSize: 11, // 텍스트 크기 줄이기
+                              fontWeight: FontWeight.w400,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
 
-                        Row(
-                          children: [
-                            const Text("파동 색상 선택",
-                                style:
-                                TextStyle(fontSize: 12, color: Colors.black54)),
-                            const SizedBox(width: 6),
-                            // 파랑
-                            GestureDetector(
-                              onTap: () => setState(() => _selectedColor = "blue"),
-                              child: CircleAvatar(
-                                radius: 12,
-                                backgroundColor: const Color(0xFFB9D0FF),
-                                child: _selectedColor == "blue"
-                                    ? const Icon(Icons.check,
-                                    size: 19, color: Color(0xFF0054FF))
-                                    : null,
-                              ),
+                        const SizedBox(width: 6),
+
+                        // 회색 박스 (선택된 이모지)
+                        Container(
+                          width: 40,
+                          height: 40,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            _emoji,
+                            style: const TextStyle(fontSize: 18), // 기존 22 → 18
+                          ),
+                        ),
+
+
+                        const Spacer(),
+
+                        // '소리명으로 보기' 버튼
+                        OutlinedButton(
+                          onPressed: () {},
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFFCBCBCB)),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // 내부 여백 줄임
+                            minimumSize: const Size(90, 32), // 버튼 최소 크기 지정
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                            const SizedBox(width: 6),
-                            // 초록
-                            GestureDetector(
-                              onTap: () => setState(() => _selectedColor = "green"),
-                              child: CircleAvatar(
-                                radius: 12,
-                                backgroundColor: const Color(0xFFCCFFA5),
-                                child: _selectedColor == "green"
-                                    ? const Icon(Icons.check,
-                                    size: 14, color: Colors.green)
-                                    : null,
-                              ),
+                          ),
+                          child: const Text(
+                            "소리명으로 보기",
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w400,
+                              color: Color(0xFF3F3E3E),
                             ),
-                            const SizedBox(width: 6),
-                            // 빨강
-                            GestureDetector(
-                              onTap: () => setState(() => _selectedColor = "red"),
-                              child: CircleAvatar(
-                                radius: 12,
-                                backgroundColor: const Color(0xFFFFD7D4),
-                                child: _selectedColor == "red"
-                                    ? const Icon(Icons.check,
-                                    size: 14, color: Colors.red)
-                                    : null,
-                              ),
-                            ),
-                          ],
+                          ),
+                        ),
+
+                      ],
+                    ),
+
+                    const SizedBox(height: 9),
+
+                    // 파동 색상 선택 (그대로)
+                    Row(
+                      children: [
+                        const Text("파동 색상 선택",
+                            style: TextStyle(fontSize: 12, color: Colors.black54)),
+                        const SizedBox(width: 6),
+                        // 파랑
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedColor = "blue"),
+                          child: CircleAvatar(
+                            radius: 12,
+                            backgroundColor: const Color(0xFFB9D0FF),
+                            child: _selectedColor == "blue"
+                                ? const Icon(Icons.check,
+                                size: 19, color: Color(0xFF0054FF))
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        // 초록
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedColor = "green"),
+                          child: CircleAvatar(
+                            radius: 12,
+                            backgroundColor: const Color(0xFFCCFFA5),
+                            child: _selectedColor == "green"
+                                ? const Icon(Icons.check,
+                                size: 14, color: Colors.green)
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        // 빨강
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedColor = "red"),
+                          child: CircleAvatar(
+                            radius: 12,
+                            backgroundColor: const Color(0xFFFFD7D4),
+                            child: _selectedColor == "red"
+                                ? const Icon(Icons.check,
+                                size: 14, color: Colors.red)
+                                : null,
+                          ),
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 60),
 
                     // 마이크 + 파형
