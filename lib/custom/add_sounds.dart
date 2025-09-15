@@ -352,7 +352,7 @@ class _AddSoundsState extends State<AddSounds> {
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: Color(0xFFCBCBCB)),
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // 내부 여백 줄임
-                            minimumSize: const Size(90, 32), // 버튼 최소 크기 지정
+                            minimumSize: const Size(65, 26), // 버튼 최소 크기 지정
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -360,8 +360,8 @@ class _AddSoundsState extends State<AddSounds> {
                           child: const Text(
                             "소리명으로 보기",
                             style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w400,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w500,
                               color: Color(0xFF3F3E3E),
                             ),
                           ),
