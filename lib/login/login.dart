@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'withoutlogin.dart';
+import 'signup.dart'; // 회원가입 화면 이동
+import '../custom/basic_screen.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,6 +20,8 @@ class _LoginScreenState extends State<LoginScreen>
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _pwController = TextEditingController();
 
+  String? _loginError; //로그인 에러 메시지 저장
+
   @override
   void initState() {
     super.initState();
@@ -22,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
-    )..repeat(); //무한 반복
+    )..repeat(); // 무한 반복
   }
 
   @override
@@ -31,6 +38,52 @@ class _LoginScreenState extends State<LoginScreen>
     _idController.dispose();
     _pwController.dispose();
     super.dispose();
+  }
+
+  Future<void> _login() async {
+    final url = Uri.parse("https://13.209.61.41.nip.io/api/users/signin");
+    final body = {
+      "id": _idController.text.trim(),
+      "password": _pwController.text.trim(),
+    };
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data["isSuccess"] == true) {
+          //로그인 성공
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("로그인 성공!")),
+          );
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const BasicScreen()),
+          );
+        } else {
+
+          //로그인 실패
+          setState(() {
+            _loginError = data["message"] ?? "로그인 실패";
+          });
+        }
+      } else {
+        setState(() {
+          _loginError = "서버 오류: ${response.statusCode}";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _loginError = "네트워크 오류: $e";
+      });
+    }
   }
 
   @override
@@ -49,7 +102,6 @@ class _LoginScreenState extends State<LoginScreen>
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    //첫 번째 원
                     AnimatedBuilder(
                       animation: _controller,
                       builder: (context, child) {
@@ -63,7 +115,6 @@ class _LoginScreenState extends State<LoginScreen>
                         );
                       },
                     ),
-                    //두 번째 원 (반박자 늦게)
                     AnimatedBuilder(
                       animation: _controller,
                       builder: (context, child) {
@@ -78,7 +129,6 @@ class _LoginScreenState extends State<LoginScreen>
                         );
                       },
                     ),
-                    //중앙 로고
                     Container(
                       width: 161,
                       height: 161,
@@ -113,57 +163,103 @@ class _LoginScreenState extends State<LoginScreen>
 
               const SizedBox(height: 40),
 
-              //아이디 입력
+              //아이디 pill + 입력
               Container(
                 width: 300,
-                height: 44,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: TextField(
-                  controller: _idController,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    hintText: "아이디를 입력해 주세요.",
-                    hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
+                margin: const EdgeInsets.only(bottom: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6497FF).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        "아이디",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF6497FF),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: TextField(
+                        controller: _idController,
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          hintText: "아이디를 입력해 주세요.",
+                          hintStyle: TextStyle(
+                              fontSize: 13, color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
-              const SizedBox(height: 16),
-
-              //비밀번호
+              //비밀번호 pill + 입력
               Container(
                 width: 300,
-                height: 44,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                child: TextField(
-                  controller: _pwController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    hintText: "비밀번호를 입력해 주세요.",
-                    hintStyle: TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
+                margin: const EdgeInsets.only(bottom: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6497FF).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text(
+                        "비밀번호",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF6497FF),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: TextField(
+                        controller: _pwController,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          hintText: "비밀번호를 입력해 주세요.",
+                          hintStyle: TextStyle(
+                              fontSize: 13, color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
-              const SizedBox(height: 24),
-
-              //로그인
+              //로그인 버튼
               SizedBox(
                 width: 300,
                 height: 44,
                 child: ElevatedButton(
-                  onPressed: () {
-                    //여기에 로그인 기능
-                  },
+                  onPressed: _login,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6497FF),
                     shape: RoundedRectangleBorder(
@@ -183,13 +279,17 @@ class _LoginScreenState extends State<LoginScreen>
 
               const SizedBox(height: 20),
 
-              //회원가입
+              //회원가입 버튼
               SizedBox(
                 width: 300,
                 height: 44,
                 child: OutlinedButton(
                   onPressed: () {
-                    // 여기에 회원가입 로직 
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SignupScreen()),
+                    );
                   },
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFF6497FF)),
