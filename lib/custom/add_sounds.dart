@@ -9,7 +9,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:permission_handler/permission_handler.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import '../shared_components/bottom_navigation.dart';
 
 class AddSounds extends StatefulWidget {
@@ -19,16 +19,17 @@ class AddSounds extends StatefulWidget {
   State<AddSounds> createState() => _AddSoundsState();
 }
 
-class _AddSoundsState extends State<AddSounds> {
+class _AddSoundsState extends State<AddSounds>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _controller = TextEditingController();
   bool _isNotEmpty = false; //입력 여부 상태 저장
   String _selectedColor = "blue"; //기본 색상 파란색
   bool _isRecording = false; //마이크 버튼 상태(false=기본, true=녹음 중)
 
-  // 하단 탭 상태
+  //하단 탭 상태
   int _selectedTabIndex = 0;
 
-  //이모지,녹음파일
+  //이모지, 녹음파일
   String _emoji = '🔔'; //서버로 보낼 기본 이모지
   File? _audioFile; //녹음 파일
   final AudioRecorder _recorder = AudioRecorder(); //녹음기
@@ -39,7 +40,10 @@ class _AddSoundsState extends State<AddSounds> {
   //api 베이스
   static const String _baseUrl = 'https://13.209.61.41.nip.io';
 
-  //이모지 리스트 50개
+  //파형 움직임 컨트롤러
+  late AnimationController _waveController;
+
+  //이모지 리스트 임의 값 50개
   final List<String> _emojiList = [
     '😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊',
     '😋','😎','😍','😘','🥰','😗','😙','😚','🙂','🤗',
@@ -80,8 +84,8 @@ class _AddSoundsState extends State<AddSounds> {
                     final e = _emojiList[index];
                     return GestureDetector(
                       onTap: () {
-                        setState(() => _emoji = e); //선택된 이모지 반영
-                        Navigator.pop(context); //모달 닫기
+                        setState(() => _emoji = e);
+                        Navigator.pop(context);
                       },
                       child: Center(
                         child: Text(
@@ -103,19 +107,23 @@ class _AddSoundsState extends State<AddSounds> {
   @override
   void initState() {
     super.initState();
+
+    _waveController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(); //파형 계속 움직이도록 반복
+
     _controller.addListener(() {
       setState(() {
-        _isNotEmpty = _controller.text.isNotEmpty; //입력되면 true
+        _isNotEmpty = _controller.text.isNotEmpty;
       });
     });
 
-    //녹음 중 실시간으로 파형
     _recorder
         .onAmplitudeChanged(const Duration(milliseconds: 100))
         .listen((amp) {
       if (!mounted) return;
       setState(() {
-        //데시벨 0~60 범위로 변환해서 파형 크기로 사용
         _amplitude = (amp.current + 60).clamp(0, 60);
       });
     });
@@ -125,27 +133,21 @@ class _AddSoundsState extends State<AddSounds> {
   void dispose() {
     _controller.dispose();
     _recorder.dispose();
+    _waveController.dispose();
     super.dispose();
   }
 
-  // 하단 탭 콜백 (원하면 여기서 라우팅 처리)
   void _onTabChanged(int index) {
     setState(() => _selectedTabIndex = index);
-    // TODO: Navigator로 각 탭 페이지 이동 연결
-    // if (index == 0) Navigator.pushReplacement(...);
   }
 
   //녹음 시작
   Future<void> _startRecord() async {
-    //마이크 권한 요청
     final status = await Permission.microphone.request();
-    debugPrint('🎤 마이크 권한 상태: $status');
-
     if (status.isGranted) {
       final dir = await getTemporaryDirectory();
-      final path =
-      p.join(dir.path, 'custom_sound_${DateTime.now().millisecondsSinceEpoch}.wav');
-      debugPrint('📂 녹음 경로: $path');
+      final path = p.join(
+          dir.path, 'custom_sound_${DateTime.now().millisecondsSinceEpoch}.wav');
 
       await _recorder.start(
         const RecordConfig(
@@ -160,8 +162,6 @@ class _AddSoundsState extends State<AddSounds> {
         _isRecording = true;
         _audioFile = File(path);
       });
-
-      debugPrint('✅ 녹음 시작됨');
     } else {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -179,7 +179,7 @@ class _AddSoundsState extends State<AddSounds> {
     });
   }
 
-  //업로드 (multipart/form-data)
+  //업로드
   Future<Map<String, dynamic>?> _uploadSound() async {
     if (_controller.text.trim().isEmpty) {
       if (!mounted) return null;
@@ -196,15 +196,13 @@ class _AddSoundsState extends State<AddSounds> {
       return null;
     }
 
-    final uri = Uri.parse('$_baseUrl/api/sound/upload'); //업로드 API 엔드포인트
-    final request = http.MultipartRequest('POST', uri); //HTTP POST 준비
+    final uri = Uri.parse('$_baseUrl/api/sound/upload');
+    final request = http.MultipartRequest('POST', uri);
 
-    // customName, emoji, color(RED|BLUE|GREEN), file(.wav)
-    request.fields['customName'] = _controller.text.trim(); //소리 이름
-    request.fields['emoji'] = _emoji; //이모지
-    request.fields['color'] = _selectedColor.toUpperCase(); //색상
+    request.fields['customName'] = _controller.text.trim();
+    request.fields['emoji'] = _emoji;
+    request.fields['color'] = _selectedColor.toUpperCase();
 
-    // 오디오 파일 파트
     final mimeType = lookupMimeType(_audioFile!.path) ?? 'audio/wav';
     final mediaType = MediaType.parse(mimeType);
     final filePart = await http.MultipartFile.fromPath(
@@ -215,11 +213,19 @@ class _AddSoundsState extends State<AddSounds> {
     );
     request.files.add(filePart);
 
-    // 필요 시 인증 토큰
-    // request.headers['Authorization'] = 'Bearer <token>';
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("accessToken");
+    if (token == null) {
+      if (!mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("로그인이 필요합니다.")),
+      );
+      return null;
+    }
+    request.headers['Authorization'] = 'Bearer $token';
 
-    final streamed = await request.send(); //요청 전송
-    final resp = await http.Response.fromStream(streamed); //응답 수신
+    final streamed = await request.send();
+    final resp = await http.Response.fromStream(streamed);
 
     if (resp.statusCode >= 200 && resp.statusCode < 300) {
       if (!mounted) return null;
@@ -243,13 +249,12 @@ class _AddSoundsState extends State<AddSounds> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFD4E2FF), //배경색
+      backgroundColor: const Color(0xFFD4E2FF),
       body: Stack(
         children: [
           Column(
             children: [
               const SizedBox(height: 44),
-              //로고
               Center(
                 child: ClipOval(
                   child: Image.asset(
@@ -274,7 +279,6 @@ class _AddSoundsState extends State<AddSounds> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
               ),
-              //내용
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Column(
@@ -291,7 +295,8 @@ class _AddSoundsState extends State<AddSounds> {
                       controller: _controller,
                       style: TextStyle(
                         fontSize: 12,
-                        fontWeight: _isNotEmpty ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                        _isNotEmpty ? FontWeight.bold : FontWeight.normal,
                         color: Colors.black,
                       ),
                       decoration: const InputDecoration(
@@ -302,16 +307,16 @@ class _AddSoundsState extends State<AddSounds> {
                     ),
                     const SizedBox(height: 12),
 
-                    //추가 할 이모지 + 색상
+                    //이모지 and 색상
                     Row(
                       children: [
-                        // '추가한 이모지 변경하기' 버튼
                         ElevatedButton(
                           onPressed: _selectEmoji,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF6497FF),
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4), // 내부 여백 줄이기
-                            minimumSize: const Size(100, 32), // 최소 버튼 크기
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 4),
+                            minimumSize: const Size(100, 32),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -319,16 +324,13 @@ class _AddSoundsState extends State<AddSounds> {
                           child: const Text(
                             "추가한 이모지 변경하기",
                             style: TextStyle(
-                              fontSize: 11, // 텍스트 크기 줄이기
+                              fontSize: 11,
                               fontWeight: FontWeight.w400,
                               color: Colors.white,
                             ),
                           ),
                         ),
-
                         const SizedBox(width: 6),
-
-                        // 회색 박스 (선택된 이모지)
                         Container(
                           width: 40,
                           height: 40,
@@ -337,22 +339,18 @@ class _AddSoundsState extends State<AddSounds> {
                             color: Colors.grey.shade300,
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: Text(
-                            _emoji,
-                            style: const TextStyle(fontSize: 18), // 기존 22 → 18
-                          ),
+                          child: Text(_emoji,
+                              style: const TextStyle(fontSize: 18)),
                         ),
-
-
                         const Spacer(),
-
-                        // '소리명으로 보기' 버튼
                         OutlinedButton(
                           onPressed: () {},
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFCBCBCB)),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // 내부 여백 줄임
-                            minimumSize: const Size(65, 26), // 버튼 최소 크기 지정
+                            side:
+                            const BorderSide(color: Color(0xFFCBCBCB)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            minimumSize: const Size(65, 26),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -366,19 +364,18 @@ class _AddSoundsState extends State<AddSounds> {
                             ),
                           ),
                         ),
-
                       ],
                     ),
 
                     const SizedBox(height: 9),
 
-                    // 파동 색상 선택 (그대로)
+                    //파동 색상 선택
                     Row(
                       children: [
                         const Text("파동 색상 선택",
-                            style: TextStyle(fontSize: 12, color: Colors.black54)),
+                            style:
+                            TextStyle(fontSize: 12, color: Colors.black54)),
                         const SizedBox(width: 6),
-                        // 파랑
                         GestureDetector(
                           onTap: () => setState(() => _selectedColor = "blue"),
                           child: CircleAvatar(
@@ -391,7 +388,6 @@ class _AddSoundsState extends State<AddSounds> {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        // 초록
                         GestureDetector(
                           onTap: () => setState(() => _selectedColor = "green"),
                           child: CircleAvatar(
@@ -404,7 +400,6 @@ class _AddSoundsState extends State<AddSounds> {
                           ),
                         ),
                         const SizedBox(width: 6),
-                        // 빨강
                         GestureDetector(
                           onTap: () => setState(() => _selectedColor = "red"),
                           child: CircleAvatar(
@@ -421,7 +416,7 @@ class _AddSoundsState extends State<AddSounds> {
 
                     const SizedBox(height: 60),
 
-                    // 마이크 + 파형
+                    //마이크 + 파형
                     Stack(
                       alignment: Alignment.center,
                       children: [
@@ -441,16 +436,22 @@ class _AddSoundsState extends State<AddSounds> {
                             ),
                           ),
                         ),
-
-                        // 파형 (amplitude 반영)
                         if (_isRecording)
-                          CustomPaint(
-                            size: const Size(328, 120),
-                            painter: WavePainter(_selectedColor, _amplitude),
+                          AnimatedBuilder(
+                            animation: _waveController,
+                            builder: (context, child) {
+                              return CustomPaint(
+                                size: const Size(328, 120),
+                                painter: WavePainter(
+                                  _selectedColor,
+                                  _amplitude,
+                                  _waveController.value * 2 * pi,
+                                ),
+                              );
+                            },
                           ),
                       ],
                     ),
-
                     const SizedBox(height: 30),
 
                     //녹음 버튼
@@ -487,7 +488,7 @@ class _AddSoundsState extends State<AddSounds> {
                               height: 32,
                               decoration: BoxDecoration(
                                 color: const Color(0xffff1100),
-                                borderRadius: BorderRadius.circular(6), // 네모
+                                borderRadius: BorderRadius.circular(6),
                               ),
                             )
                                 : Container(
@@ -496,7 +497,7 @@ class _AddSoundsState extends State<AddSounds> {
                               height: 32,
                               decoration: const BoxDecoration(
                                 color: Color(0xffff1100),
-                                shape: BoxShape.circle, // 원
+                                shape: BoxShape.circle,
                               ),
                             ),
                           ),
@@ -541,8 +542,6 @@ class _AddSoundsState extends State<AddSounds> {
           ),
         ],
       ),
-
-      // 여기서 바텀 네비게이션 붙임
       bottomNavigationBar: BottomNavigation(
         selectedTabIndex: _selectedTabIndex,
         onTabChanged: _onTabChanged,
@@ -551,11 +550,13 @@ class _AddSoundsState extends State<AddSounds> {
   }
 }
 
-//파형 CustomPainter
+//파형
 class WavePainter extends CustomPainter {
   final String color;
-  final double amplitude; //소리 크기
-  WavePainter(this.color, this.amplitude);
+  final double amplitude;
+  final double time;
+
+  WavePainter(this.color, this.amplitude, this.time);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -570,8 +571,7 @@ class WavePainter extends CustomPainter {
 
     final path = Path();
     for (double x = 0; x < size.width; x++) {
-      //amplitude 크기 반영
-      final y = size.height / 2 + amplitude * sin(x / 10);
+      final y = size.height / 2 + amplitude * sin((x / 10) + time);
       if (x == 0) {
         path.moveTo(x, y);
       } else {

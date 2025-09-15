@@ -1,10 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'withoutlogin.dart';
-import 'signup.dart'; // 회원가입 화면 이동
+import 'signup.dart';
 import '../custom/basic_screen.dart';
-
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,16 +20,16 @@ class _LoginScreenState extends State<LoginScreen>
   final TextEditingController _idController = TextEditingController();
   final TextEditingController _pwController = TextEditingController();
 
-  String? _loginError; //로그인 에러 메시지 저장
+  String? _loginError;
+  bool _isLoading = false; //로딩 상태
 
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
-    )..repeat(); // 무한 반복
+    )..repeat();
   }
 
   @override
@@ -41,6 +41,16 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Future<void> _login() async {
+    if (_idController.text.trim().isEmpty ||
+        _pwController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('아이디/비밀번호를 입력해 주세요.')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
     final url = Uri.parse("https://13.209.61.41.nip.io/api/users/signin");
     final body = {
       "id": _idController.text.trim(),
@@ -54,35 +64,59 @@ class _LoginScreenState extends State<LoginScreen>
         body: jsonEncode(body),
       );
 
+      debugPrint('🔐 signin status=${response.statusCode} body=${response.body}');
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
         if (data["isSuccess"] == true) {
-          //로그인 성공
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("로그인 성공!")),
-          );
 
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const BasicScreen()),
-          );
+          final token = data["data"]?["accessToken"] as String?;
+          if (token == null) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('토큰을 받지 못했습니다. 다시 시도해 주세요.')),
+            );
+          } else {
+            final prefs = await SharedPreferences.getInstance();
+            print("SharedPreferences 준비 완료");
+            await prefs.setString("accessToken", token);
+
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("로그인 성공!")),
+            );
+
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const BasicScreen()),
+            );
+          }
+          //로그인 시 에러 뜨는데 찾기 위해 넣어둠
         } else {
-
-          //로그인 실패
-          setState(() {
-            _loginError = data["message"] ?? "로그인 실패";
-          });
+          final msg = (data["message"] ?? "로그인 실패") as String;
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(msg)),
+          );
+          setState(() => _loginError = msg);
         }
       } else {
-        setState(() {
-          _loginError = "서버 오류: ${response.statusCode}";
-        });
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('서버 오류: ${response.statusCode}')),
+        );
+        setState(() => _loginError = "서버 오류: ${response.statusCode}");
       }
     } catch (e) {
-      setState(() {
-        _loginError = "네트워크 오류: $e";
-      });
+      debugPrint('signin error: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('네트워크 오류: $e')),
+      );
+      setState(() => _loginError = "네트워크 오류: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -199,8 +233,8 @@ class _LoginScreenState extends State<LoginScreen>
                         decoration: const InputDecoration(
                           border: InputBorder.none,
                           hintText: "아이디를 입력해 주세요.",
-                          hintStyle: TextStyle(
-                              fontSize: 13, color: Colors.grey),
+                          hintStyle:
+                          TextStyle(fontSize: 13, color: Colors.grey),
                         ),
                       ),
                     ),
@@ -245,8 +279,8 @@ class _LoginScreenState extends State<LoginScreen>
                         decoration: const InputDecoration(
                           border: InputBorder.none,
                           hintText: "비밀번호를 입력해 주세요.",
-                          hintStyle: TextStyle(
-                              fontSize: 13, color: Colors.grey),
+                          hintStyle:
+                          TextStyle(fontSize: 13, color: Colors.grey),
                         ),
                       ),
                     ),
@@ -259,14 +293,23 @@ class _LoginScreenState extends State<LoginScreen>
                 width: 300,
                 height: 44,
                 child: ElevatedButton(
-                  onPressed: _login,
+                  onPressed: _isLoading ? null : _login,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6497FF),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(25),
                     ),
                   ),
-                  child: const Text(
+                  child: _isLoading
+                      ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                      : const Text(
                     "로그인",
                     style: TextStyle(
                       fontSize: 14,
@@ -330,6 +373,16 @@ class _LoginScreenState extends State<LoginScreen>
                   ),
                 ),
               ),
+
+              //로그인 에러 메시지 표시
+              if (_loginError != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12.0),
+                  child: Text(
+                    _loginError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ),
             ],
           ),
         ),
