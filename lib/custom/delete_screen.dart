@@ -94,7 +94,10 @@ class _BasicScreenState extends State<DeleteScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF6497FF),
             ),
-            child: const Text("삭제하기"),
+            child: const Text(
+                "삭제하기",
+                style: TextStyle(color: Color(0xffffffff)),
+            ),
             onPressed: () => Navigator.pop(context, true),
           ),
         ],
