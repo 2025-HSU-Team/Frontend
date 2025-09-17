@@ -13,7 +13,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../shared_components/bottom_navigation.dart';
 
 class AddSounds extends StatefulWidget {
-  const AddSounds({super.key});
+  //initialData
+  final Map<String, dynamic>? initialData; //수정 모드에서 전달된 데이터
+  const AddSounds({super.key, this.initialData});
 
   @override
   State<AddSounds> createState() => _AddSoundsState();
@@ -119,6 +121,14 @@ class _AddSoundsState extends State<AddSounds>
       });
     });
 
+    //초기값 세팅(수정 모드)
+    if (widget.initialData != null) {
+      _controller.text = widget.initialData!['name'] ?? '';
+      _emoji = widget.initialData!['emoji'] ?? '🔔';
+      _selectedColor = (widget.initialData!['color'] ?? 'blue').toLowerCase();
+      _isNotEmpty = _controller.text.isNotEmpty;
+    }
+
     _recorder
         .onAmplitudeChanged(const Duration(milliseconds: 100))
         .listen((amp) {
@@ -179,7 +189,7 @@ class _AddSoundsState extends State<AddSounds>
     });
   }
 
-  //업로드
+  //업로드 (추가 or 수정)
   Future<Map<String, dynamic>?> _uploadSound() async {
     if (_controller.text.trim().isEmpty) {
       if (!mounted) return null;
@@ -196,8 +206,24 @@ class _AddSoundsState extends State<AddSounds>
       return null;
     }
 
-    final uri = Uri.parse('$_baseUrl/api/sound/upload');
-    final request = http.MultipartRequest('POST', uri);
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("accessToken");
+    if (token == null) {
+      if (!mounted) return null;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("로그인이 필요합니다.")),
+      );
+      return null;
+    }
+
+    //수정 모드인지 여부 확인
+    final isEdit = widget.initialData != null;
+    final soundId = widget.initialData?['id'];
+
+    final uri = isEdit
+        ? Uri.parse('$_baseUrl/api/sound/modify/$soundId') //수정 API
+        : Uri.parse('$_baseUrl/api/sound/upload'); //추가 API
+    final request = http.MultipartRequest(isEdit ? 'PUT' : 'POST', uri);
 
     request.fields['customName'] = _controller.text.trim();
     request.fields['emoji'] = _emoji;
@@ -213,15 +239,6 @@ class _AddSoundsState extends State<AddSounds>
     );
     request.files.add(filePart);
 
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString("accessToken");
-    if (token == null) {
-      if (!mounted) return null;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("로그인이 필요합니다.")),
-      );
-      return null;
-    }
     request.headers['Authorization'] = 'Bearer $token';
 
     final streamed = await request.send();
@@ -230,9 +247,10 @@ class _AddSoundsState extends State<AddSounds>
     if (resp.statusCode >= 200 && resp.statusCode < 300) {
       if (!mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('업로드 완료!')),
+        SnackBar(content: Text(isEdit ? '수정 완료!' : '업로드 완료!')),
       );
       return {
+        'id': soundId,
         'name': _controller.text.trim(),
         'emoji': _emoji,
         'color': _selectedColor.toUpperCase(),
@@ -240,7 +258,7 @@ class _AddSoundsState extends State<AddSounds>
     } else {
       if (!mounted) return null;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('업로드 실패 (${resp.statusCode})')),
+        SnackBar(content: Text('실패 (${resp.statusCode})')),
       );
       return null;
     }
@@ -284,9 +302,10 @@ class _AddSoundsState extends State<AddSounds>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text(
-                      "소리 추가하기",
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+
+                    Text(
+                      widget.initialData != null ? "소리 수정하기" : "소리 추가하기",
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 20),
 
@@ -520,7 +539,7 @@ class _AddSoundsState extends State<AddSounds>
                         onPressed: () async {
                           final res = await _uploadSound();
                           if (!context.mounted || res == null) return;
-                          Navigator.of(context).pop(res);
+                          Navigator.of(context).popUntil((route)=>route.isFirst);
                         },
                         child: const Text(
                           "소리 저장하기",

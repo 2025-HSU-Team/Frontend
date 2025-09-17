@@ -124,6 +124,10 @@ class _BasicScreenState extends State<DeleteScreen> {
       customSounds.removeWhere((s) => selectedSoundIds.contains(s['id']));
       selectedSoundIds.clear();
     });
+    //삭제 후 다시 basic_screen으로 돌아오도록
+    if(mounted){
+      Navigator.of(context).popUntil((route)=>route.isFirst);
+    }
   }
 
   @override
