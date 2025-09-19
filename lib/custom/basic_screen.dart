@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'add_sounds.dart';
-
+import '../shared_components/bottom_navigation.dart';
 
 class BasicScreen extends StatelessWidget {
   const BasicScreen({super.key});
@@ -33,10 +33,22 @@ class BasicScreen extends StatelessWidget {
 
           //쓰레기통 (오른쪽 상단 고정)
           Positioned(
-            top: 90,
+            top: 89,
             right: 21,
             child: Image.asset(
               'assets/images/trashcan.png',
+              width: 50,
+              height: 45,
+              fit: BoxFit.contain,
+            ),
+          ),
+
+          //수정하기
+          Positioned(
+            top: 89,
+            right: 70,
+            child: Image.asset(
+              'assets/images/fix.png',
               width: 50,
               height: 45,
               fit: BoxFit.contain,
@@ -49,7 +61,7 @@ class BasicScreen extends StatelessWidget {
             left: (MediaQuery.of(context).size.width - 328) / 2, //가운데  정렬 코드
             child: Container(
               width: 328,
-              height: 539,
+              height: 580,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
@@ -74,13 +86,14 @@ class BasicScreen extends StatelessWidget {
                     const Divider(color: Colors.black),
 
                     //기본음 9개
-                    Expanded(
+                    SizedBox(
+                      height: 350,
                       child: GridView.count(
                         crossAxisCount: 3,
                         mainAxisSpacing: 28,
                         crossAxisSpacing: 17,
-                        padding: EdgeInsets.zero, //divider랑 간격 없게 하는법
-                        children: const[
+                        padding: EdgeInsets.zero,
+                        children: const [
                           SoundBox(
                             image: 'assets/images/emergency.png',
                             label: '비상 경보음',
@@ -168,13 +181,12 @@ class BasicScreen extends StatelessWidget {
         ],
       ),
 
-      //하단 재사용할 거 (성훈이 코드 받으면 여기에 넣을 예정)
-      // bottomNavigationBar: BottomBar(
-      //   currentIndex:0,
-      //   onTap(index){
-      //     //
-      // }
-      // ),
+      bottomNavigationBar: BottomNavigation(
+        selectedTabIndex: 0, // "내소리" 탭이 선택된 상태
+        onTabChanged: (index) {
+          print("선택된 탭: $index");
+        },
+      ),
     );
   }
 }

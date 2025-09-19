@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'add_sounds.dart';
+import '../shared_components/bottom_navigation.dart';
 
 class DeleteScreen extends StatelessWidget {
   const DeleteScreen({super.key});
@@ -40,6 +41,17 @@ class DeleteScreen extends StatelessWidget {
             ),
           ),
 
+          //수정하기
+          Positioned(
+            top: 89,
+            right: 70,
+            child: Image.asset(
+              'assets/images/fix.png',
+              width: 50,
+              height: 45,
+              fit: BoxFit.contain,
+            ),
+          ),
 
           //쓰레기통 밑 흰 박스
           Positioned(
@@ -61,7 +73,8 @@ class DeleteScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
 
-                    Expanded(
+                    SizedBox(
+                      height: 350,
                       child: GridView.count(
                         crossAxisCount: 3,
                         mainAxisSpacing: 28,
@@ -128,13 +141,12 @@ class DeleteScreen extends StatelessWidget {
         ],
       ),
 
-      // 하단 네비게이션 (추후 연결 예정)
-      // bottomNavigationBar: BottomBar(
-      //   currentIndex: 0,
-      //   onTap: (index) {
-      //     //
-      //   },
-      // ),
+      bottomNavigationBar: BottomNavigation(
+        selectedTabIndex: 0, // "내소리" 탭이 선택된 상태
+        onTabChanged: (index) {
+          print("선택된 탭: $index");
+        },
+      ),
     );
   }
 }

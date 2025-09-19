@@ -40,7 +40,9 @@ class _MainPageState extends State<MainPage> {
               onCategoryChanged: _onCategoryChanged,
               categories: _categories,
             ),
-            const Expanded(child: HomeScreen()),
+            Expanded(
+              child: const HomeScreen(), // 모든 카테고리에서 HomeScreen 사용
+            ),
             BottomNavigation(
               selectedTabIndex: _selectedTabIndex,
               onTabChanged: _onTabChanged,
