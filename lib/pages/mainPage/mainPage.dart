@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'components/home_screen.dart';
 import 'package:frontend/shared_components/bottom_navigation.dart';
 import 'package:frontend/shared_components/header_navigation.dart';
-import 'package:frontend/pages/concert/concert_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -42,11 +41,7 @@ class _MainPageState extends State<MainPage> {
               categories: _categories,
             ),
             Expanded(
-              child: _selectedCategoryIndex == 0
-                  ? const HomeScreen()
-                  : _selectedCategoryIndex == 1
-                      ? const ConcertPage()
-                      : const HomeScreen(), // 연극 페이지는 임시로 HomeScreen
+              child: const HomeScreen(), // 모든 카테고리에서 HomeScreen 사용
             ),
             BottomNavigation(
               selectedTabIndex: _selectedTabIndex,
