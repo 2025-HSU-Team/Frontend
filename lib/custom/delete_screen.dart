@@ -243,7 +243,17 @@ class _BasicScreenState extends State<DeleteScreen> {
                           ),
                         ),
 
-                        const Text("커스텀", style: TextStyle(fontSize: 12)),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD4E2FF),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            "커스텀",
+                            style: TextStyle(fontSize: 12, color: Color(0xFF3A70DA)),
+                          ),
+                        ),
                         const Divider(color: Colors.black),
 
                         //커스텀 리스트

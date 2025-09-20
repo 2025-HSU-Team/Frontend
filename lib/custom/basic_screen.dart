@@ -8,6 +8,9 @@ import '../shared_components/bottom_navigation.dart';
 import 'delete_screen.dart';
 import 'fix_screen.dart';
 
+import '../pages/mainPage/mainPage.dart';
+import '../alarm/alarm_set.dart';
+
 class BasicScreen extends StatefulWidget {
   const BasicScreen({super.key});
 
@@ -242,7 +245,22 @@ class _BasicScreenState extends State<BasicScreen> {
       bottomNavigationBar: BottomNavigation(
         selectedTabIndex: 0,
         onTabChanged: (index) {
-          print("선택된 탭: $index");
+          if (index == 0) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const BasicScreen()),
+            );
+          } else if (index == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const MainPage()),
+            );
+          } else if (index == 2) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const AlarmSetScreen()),
+            );
+          }
         },
       ),
     );
