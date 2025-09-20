@@ -106,6 +106,19 @@ class _AddSoundsState extends State<AddSounds>
     );
   }
 
+  Color _getMicBackgroundColor() {
+    switch (_selectedColor) {
+      case "blue":
+        return const Color(0xFFD4E2FF);
+      case "green":
+        return const Color(0x66DFFFC6);
+      case "red":
+        return const Color(0x66FFD7D4);
+      default:
+        return const Color(0xFFD4E2FF);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -442,13 +455,17 @@ class _AddSoundsState extends State<AddSounds>
                         Container(
                           width: 120,
                           height: 120,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Color(0xFFD4E2FF),
+                              color: _getMicBackgroundColor(),
                           ),
                           child: Center(
                             child: Image.asset(
-                              'assets/images/mike.png',
+                              _selectedColor == "blue"
+                                  ? 'assets/images/bluemike.png'
+                                  : _selectedColor == "green"
+                                  ? 'assets/images/greenmike.png'
+                                  : 'assets/images/redmike.png',
                               width: 60,
                               height: 60,
                               fit: BoxFit.contain,
