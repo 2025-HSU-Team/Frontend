@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../shared_components/bottom_navigation.dart';
 
+import '../pages/mainPage/mainPage.dart';
+import '../custom/basic_screen.dart';
+
 //기본 알람 9개
 final List<Map<String, dynamic>> allDefaultSounds = [
   {"name": "비상 경보음", "color": Colors.red, "image": "assets/images/emergency.png"},
@@ -194,12 +197,26 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
       bottomNavigationBar: BottomNavigation(
         selectedTabIndex: _selectedTabIndex,
         onTabChanged: (index) {
-          setState(() => _selectedTabIndex = index);
-          print("선택된 탭: $index");
+          if (index == 0) {
+            // 내소리 → BasicScreen
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const BasicScreen()),
+            );
+          } else if (index == 1) {
+            // 홈 → MainPage
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const MainPage()),
+            );
+          } else if (index == 2) {
+            // 옵션(자기 자신) → 그냥 무시
+          }
         },
       ),
     );
   }
+
 
   //알람
   Widget _buildAlarmItem({
