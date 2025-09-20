@@ -5,17 +5,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'add_sounds.dart';
 import '../shared_components/bottom_navigation.dart';
-import 'delete_screen.dart';
-import 'fix_screen.dart';
 
-class DeleteScreen extends StatefulWidget {
-  const DeleteScreen({super.key});
+class FixScreen extends StatefulWidget {
+  const FixScreen({super.key});
 
   @override
-  State<DeleteScreen> createState() => _BasicScreenState();
+  State<FixScreen> createState() => _FixScreenState();
 }
 
-class _BasicScreenState extends State<DeleteScreen> {
+class _FixScreenState extends State<FixScreen> {
   final ScrollController _scrollController = ScrollController();
 
   //커스텀 소리 리스트
@@ -23,7 +21,7 @@ class _BasicScreenState extends State<DeleteScreen> {
   static const String _baseUrl = 'https://13.209.61.41.nip.io';
 
   //선택된 소리 id 리스트
-  Set<int> selectedSoundIds={};
+  Set<int> selectedSoundIds = {};
 
   @override
   void initState() {
@@ -60,7 +58,7 @@ class _BasicScreenState extends State<DeleteScreen> {
           setState(() {
             customSounds = sounds.map((sound) {
               return {
-                "id": sound["SoundId"], //delete에서 id 받아서 삭제하니까 추가
+                "id": sound["SoundId"],
                 "name": sound["customName"],
                 "emoji": sound["emoji"],
                 "color": sound["color"],
@@ -68,15 +66,43 @@ class _BasicScreenState extends State<DeleteScreen> {
             }).toList();
           });
         }
-        //오류 확인하기 위해
       } else {
-        debugPrint("❌ 소리 리스트 불러오기 실패: ${response.statusCode}");
+        debugPrint("소리 리스트 불러오기 실패: ${response.statusCode}");
       }
     } catch (e) {
-      debugPrint("❌ API 호출 에러: $e");
+      debugPrint("API 호출 에러: $e");
     }
   }
 
+  //선택한 소리 수정하기
+  Future<void> _editSelectedSound() async {
+    if (selectedSoundIds.isEmpty) return;
+
+    if (selectedSoundIds.length > 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("한 번에 하나의 소리만 수정할 수 있습니다.")),
+      );
+      return;
+    }
+
+    final selectedId = selectedSoundIds.first;
+    final selectedData =
+    customSounds.firstWhere((s) => s['id'] == selectedId, orElse: () => {});
+
+    if (selectedData.isEmpty) return;
+
+    //AddSounds 페이지로 이동하면서 데이터 전달
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddSounds(
+          initialData: selectedData, //수정할 데이터 전달
+        ),
+      ),
+    ).then((_) => _fetchCustomSounds()); //수정 후 새로고침
+  }
+
+  //선택한 소리 삭제
   Future<void> _deleteSelectedSounds() async {
     if (selectedSoundIds.isEmpty) return;
 
@@ -94,10 +120,8 @@ class _BasicScreenState extends State<DeleteScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF6497FF),
             ),
-            child: const Text(
-                "삭제하기",
-                style: TextStyle(color: Color(0xffffffff)),
-            ),
+            child: const Text("삭제하기",
+                style: TextStyle(color: Colors.white)),
             onPressed: () => Navigator.pop(context, true),
           ),
         ],
@@ -124,10 +148,6 @@ class _BasicScreenState extends State<DeleteScreen> {
       customSounds.removeWhere((s) => selectedSoundIds.contains(s['id']));
       selectedSoundIds.clear();
     });
-    //삭제 후 다시 basic_screen으로 돌아오도록
-    if(mounted){
-      Navigator.of(context).popUntil((route)=>route.isFirst);
-    }
   }
 
   @override
@@ -152,7 +172,21 @@ class _BasicScreenState extends State<DeleteScreen> {
             ],
           ),
 
-          //쓰레기통
+          //수정 버튼
+          Positioned(
+            top: 89,
+            right: 70,
+            child: InkWell(
+              onTap: _editSelectedSound,
+              child: Image.asset(
+                'assets/images/fix.png',
+                width: 50,
+                height: 45,
+              ),
+            ),
+          ),
+
+          //삭제 버튼
           Positioned(
             top: 89,
             right: 21,
@@ -160,25 +194,6 @@ class _BasicScreenState extends State<DeleteScreen> {
               onTap: _deleteSelectedSounds,
               child: Image.asset(
                 'assets/images/trashcan.png',
-                width: 50,
-                height: 45,
-              ),
-            ),
-          ),
-
-          //수정 화면 이동
-          Positioned(
-            top: 89,
-            right: 70,
-            child: InkWell(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const FixScreen()),
-                ).then((_) => _fetchCustomSounds()); //자동 새로고침 되는 부분
-              },
-              child: Image.asset(
-                'assets/images/fix.png',
                 width: 50,
                 height: 45,
               ),
@@ -206,16 +221,18 @@ class _BasicScreenState extends State<DeleteScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 기본음
+                        //기본음
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: const Color(0xFFE2E2E2),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Text(
                             "기본음",
-                            style: TextStyle(fontSize: 12, color: Color(0xFF3F3E3E)),
+                            style: TextStyle(
+                                fontSize: 12, color: Color(0xFF3F3E3E)),
                           ),
                         ),
                         const Divider(color: Colors.black),
@@ -230,15 +247,42 @@ class _BasicScreenState extends State<DeleteScreen> {
                             physics: const NeverScrollableScrollPhysics(),
                             shrinkWrap: true,
                             children: const [
-                              SoundBox(image: 'assets/images/emergency.png', label: '비상 경보음', color: Colors.red),
-                              SoundBox(image: 'assets/images/carsound.png', label: '자동차 경적 소리', color: Colors.red),
-                              SoundBox(image: 'assets/images/fire.png', label: '화재 경보 소리', color: Colors.red),
-                              SoundBox(image: 'assets/images/phonecall.png', label: '전화 벨소리', color: Colors.green),
-                              SoundBox(image: 'assets/images/door.png', label: '문 여닫는 소리', color: Colors.green),
-                              SoundBox(image: 'assets/images/bell.png', label: '초인종 소리', color: Colors.green),
-                              SoundBox(image: 'assets/images/dog.png', label: '개 짖는 소리', color: Colors.blue),
-                              SoundBox(image: 'assets/images/cat.png', label: '고양이 우는 소리', color: Colors.blue),
-                              SoundBox(image: 'assets/images/babycry.png', label: '아기 우는 소리', color: Colors.blue),
+                              SoundBox(
+                                  image: 'assets/images/emergency.png',
+                                  label: '비상 경보음',
+                                  color: Colors.red),
+                              SoundBox(
+                                  image: 'assets/images/carsound.png',
+                                  label: '자동차 경적 소리',
+                                  color: Colors.red),
+                              SoundBox(
+                                  image: 'assets/images/fire.png',
+                                  label: '화재 경보 소리',
+                                  color: Colors.red),
+                              SoundBox(
+                                  image: 'assets/images/phonecall.png',
+                                  label: '전화 벨소리',
+                                  color: Colors.green),
+                              SoundBox(
+                                  image: 'assets/images/door.png',
+                                  label: '문 여닫는 소리',
+                                  color: Colors.green),
+                              SoundBox(
+                                  image: 'assets/images/bell.png',
+                                  label: '초인종 소리',
+                                  color: Colors.green),
+                              SoundBox(
+                                  image: 'assets/images/dog.png',
+                                  label: '개 짖는 소리',
+                                  color: Colors.blue),
+                              SoundBox(
+                                  image: 'assets/images/cat.png',
+                                  label: '고양이 우는 소리',
+                                  color: Colors.blue),
+                              SoundBox(
+                                  image: 'assets/images/babycry.png',
+                                  label: '아기 우는 소리',
+                                  color: Colors.blue),
                             ],
                           ),
                         ),
@@ -262,7 +306,8 @@ class _BasicScreenState extends State<DeleteScreen> {
                                   name: sound['name'],
                                   emoji: sound['emoji'],
                                   color: sound['color'],
-                                  isSelected: selectedSoundIds.contains(sound['id']),
+                                  isSelected:
+                                  selectedSoundIds.contains(sound['id']),
                                   onSelect: (id) {
                                     setState(() {
                                       if (selectedSoundIds.contains(id)) {
@@ -273,13 +318,6 @@ class _BasicScreenState extends State<DeleteScreen> {
                                     });
                                   },
                                 ),
-                              AddSoundBox(
-                                onSoundAdded: (res) {
-                                  setState(() {
-                                    customSounds.add(res);
-                                  });
-                                },
-                              ),
                             ],
                           ),
                         ),
@@ -331,7 +369,9 @@ class SoundBox extends StatelessWidget {
           child: Center(child: Image.asset(image, width: 30, height: 30)),
         ),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500)),
+        Text(label,
+            style:
+            const TextStyle(fontSize: 10, fontWeight: FontWeight.w500)),
       ],
     );
   }
@@ -343,7 +383,7 @@ class CustomSoundBox extends StatelessWidget {
   final String name;
   final String emoji;
   final String color;
-  final bool isSelected;//선택 여부
+  final bool isSelected; //선택 여부
   final Function(int) onSelect; //선택 콜백
 
   const CustomSoundBox({
@@ -365,7 +405,7 @@ class CustomSoundBox extends StatelessWidget {
         : Colors.blue;
 
     return GestureDetector(
-      onTap: () => onSelect(id),//클릭 시 선택 토글
+      onTap: () => onSelect(id), //클릭 시 선택 토글
       child: Stack(
         children: [
           Column(
@@ -379,10 +419,13 @@ class CustomSoundBox extends StatelessWidget {
                   border: Border.all(color: boxColor, width: 1.5),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Center(child: Text(emoji, style: const TextStyle(fontSize: 24))),
+                child:
+                Center(child: Text(emoji, style: TextStyle(fontSize: 24))),
               ),
               const SizedBox(height: 4),
-              Text(name, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500)),
+              Text(name,
+                  style: const TextStyle(
+                      fontSize: 10, fontWeight: FontWeight.w500)),
             ],
           ),
           //오른쪽 위 선택 동그라미
@@ -393,7 +436,7 @@ class CustomSoundBox extends StatelessWidget {
               radius: 7,
               backgroundColor: isSelected ? Colors.red : Colors.white,
               child: isSelected
-                  ? const Icon(Icons.circle, size: 14, color: Colors.red)
+                  ? const Icon(Icons.check, size: 12, color: Colors.white)
                   : Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
@@ -404,49 +447,6 @@ class CustomSoundBox extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-//소리 추가 버튼
-class AddSoundBox extends StatelessWidget {
-  final Function(Map<String, dynamic>) onSoundAdded;
-
-  const AddSoundBox({super.key, required this.onSoundAdded});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const AddSounds()),
-            ).then((result) {
-              if (result != null && result is Map<String, dynamic>) {
-                onSoundAdded(result);
-              }
-            });
-          },
-          child: Container(
-            width: 80,
-            height: 62,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade300,
-              border: Border.all(color: Colors.grey, width: 1.5),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Center(
-              child: Icon(Icons.add, size: 32, color: Colors.grey),
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
-        const Text("소리 추가하기", style: TextStyle(fontSize: 10, color: Colors.black54)),
-      ],
     );
   }
 }

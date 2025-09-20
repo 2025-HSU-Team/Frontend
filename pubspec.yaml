@@ -38,6 +38,7 @@ dependencies:
   path: ^1.9.0
   mime: ^1.0.5
   http_parser: ^4.1.2
+  shared_preferences: ^2.2.2
 
 
 
@@ -74,7 +75,6 @@ flutter:
   assets:
     - assets/images/logo.png
     - assets/images/sosaw.png
-    - assets/images/kakao.png
     - assets/images/basic.png
     - assets/images/trashcan.png
     - assets/images/fix.png
