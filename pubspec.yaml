@@ -87,7 +87,9 @@ flutter:
     - assets/images/dog.png
     - assets/images/cat.png
     - assets/images/babycry.png
-    - assets/images/mike.png
+    - assets/images/bluemike.png
+    - assets/images/greenmike.png
+    - assets/images/redmike.png
     - assets/Icon.png
     - assets/icon_blue.png
     - assets/icon_green.png
