@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/app_config.dart';
 import 'package:frontend/login/login.dart';
-import '../shared_components/bottom_navigation.dart';
 
 
 class BeforeLogin extends StatelessWidget {
@@ -84,14 +83,6 @@ class BeforeLogin extends StatelessWidget {
             ),
           ),
         ],
-      ),
-
-      bottomNavigationBar: BottomNavigation(
-        selectedTabIndex: 1, // 홈 탭 선택된 상태
-        onTabChanged: (index) {
-          // 탭 변경 시 동작 정의
-          print("선택된 탭: $index");
-        },
       ),
     );
   }

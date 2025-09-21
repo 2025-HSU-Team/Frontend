@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'withoutlogin.dart';
 import 'signup.dart';
 import '../custom/basic_screen.dart';
+import '../pages/mainPage/mainPage.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -89,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen>
 
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const BasicScreen()),
+              MaterialPageRoute(builder: (context) => const MainPage()),
             );
           }
           //로그인 시 에러 뜨는데 찾기 위해 넣어둠
