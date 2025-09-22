@@ -119,16 +119,6 @@ class BackendService {
 
   // ==================== 테스트 기능 ====================
   
-  void simulateTestResponse() {
-    print('🧪 테스트 응답 시뮬레이션');
-    final testResponse = {
-      'soundName': '테스트 소리 (개, 고양이, 아기 울음 등)',
-      'confidence': 0.95,
-      'isSuccess': true,
-    };
-    
-    onSoundDetected?.call(testResponse);
-  }
 
   // ==================== 상태 확인 ====================
   

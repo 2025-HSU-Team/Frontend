@@ -1,10 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'dart:io';
-import 'dart:convert';
-import 'dart:math' as math;
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 // 모델들
 import '../models/detection_state.dart';
@@ -199,101 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // ==================== 수동 탐지 및 테스트 ====================
-  
-  Future<void> _startManualDetection() async {
-    print('🎯 수동 소리 탐지 시작');
-    await _startSoundDetection();
-  }
 
-  void _testBackendResponse() {
-    print('🧪 테스트 응답 시뮬레이션');
-    _backendService.simulateTestResponse();
-  }
-
-  Future<void> _createTestAudioFile() async {
-    try {
-      print('🧪 테스트 오디오 파일 생성 시작...');
-      
-      final dir = await getTemporaryDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final filePath = p.join(dir.path, 'test_audio_$timestamp.wav');
-      
-      final file = File(filePath);
-      await file.writeAsBytes(_generateTestWavData());
-      
-      final fileSize = await file.length();
-      print('✅ 테스트 파일 생성 완료!');
-      print('📁 경로: $filePath');
-      print('📏 크기: $fileSize bytes (${(fileSize / 1024).toStringAsFixed(1)} KB)');
-      
-      _showFileInfoDialog(file);
-      
-    } catch (e) {
-      print('❌ 테스트 파일 생성 실패: $e');
-      _showErrorDialog('테스트 파일 생성 실패: $e');
-    }
-  }
-
-  // ==================== 테스트 오디오 생성 ====================
-  
-  List<int> _generateTestWavData() {
-    const sampleRate = 16000;
-    const numChannels = 1;
-    const bitsPerSample = 16;
-    const duration = 5;
-    final dataSize = sampleRate * numChannels * (bitsPerSample ~/ 8) * duration;
-    final fileSize = 44 + dataSize;
-    
-    final bytes = <int>[];
-    
-    // RIFF 헤더
-    bytes.addAll('RIFF'.codeUnits);
-    bytes.addAll(_int32ToBytes(fileSize - 8));
-    bytes.addAll('WAVE'.codeUnits);
-    
-    // fmt 청크
-    bytes.addAll('fmt '.codeUnits);
-    bytes.addAll(_int32ToBytes(16));
-    bytes.addAll(_int16ToBytes(1));
-    bytes.addAll(_int16ToBytes(numChannels));
-    bytes.addAll(_int32ToBytes(sampleRate));
-    bytes.addAll(_int32ToBytes(sampleRate * numChannels * (bitsPerSample ~/ 8)));
-    bytes.addAll(_int16ToBytes(numChannels * (bitsPerSample ~/ 8)));
-    bytes.addAll(_int16ToBytes(bitsPerSample));
-    
-    // data 청크
-    bytes.addAll('data'.codeUnits);
-    bytes.addAll(_int32ToBytes(dataSize));
-    
-    // 오디오 데이터 생성
-    for (int i = 0; i < dataSize ~/ 2; i++) {
-      final t = i / sampleRate;
-      final frequency = 440.0;
-      final amplitude = 0.3;
-      
-      final sample = (amplitude * math.sin(2 * math.pi * frequency * t) * 0.5 +
-                     amplitude * (math.Random().nextDouble() - 0.5) * 0.1);
-      
-      final sampleInt = (sample * 32767).round().clamp(-32768, 32767);
-      bytes.addAll(_int16ToBytes(sampleInt));
-    }
-    
-    return bytes;
-  }
-
-  List<int> _int16ToBytes(int value) {
-    return [value & 0xFF, (value >> 8) & 0xFF];
-  }
-
-  List<int> _int32ToBytes(int value) {
-    return [
-      value & 0xFF,
-      (value >> 8) & 0xFF,
-      (value >> 16) & 0xFF,
-      (value >> 24) & 0xFF,
-    ];
-  }
 
   // ==================== 다이얼로그 ====================
   
@@ -313,38 +214,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showFileInfoDialog(File file) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('🎵 파일 정보'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('📁 경로: ${file.path}'),
-            const SizedBox(height: 8),
-            FutureBuilder<int>(
-              future: file.length(),
-              builder: (context, snapshot) {
-                if (snapshot.hasData) {
-                  final sizeKB = (snapshot.data! / 1024).toStringAsFixed(1);
-                  return Text('📏 크기: ${snapshot.data} bytes ($sizeKB KB)');
-                }
-                return const Text('📏 크기: 계산 중...');
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('닫기'),
-          ),
-        ],
-      ),
-    );
-  }
 
   // ==================== UI 빌드 ====================
   
@@ -385,13 +254,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 20),
               
-              // 컨트롤 버튼들
-              ControlButtonsWidget(
-                isDetecting: _isDetecting,
-                onManualDetection: _startManualDetection,
-                onTestResponse: _testBackendResponse,
-                onCreateTestFile: _createTestAudioFile,
-              ),
+              // 컨트롤 버튼들 (현재 비어있음)
+              const ControlButtonsWidget(),
               
               // 결과 표시
               if (_showResult) ...[
