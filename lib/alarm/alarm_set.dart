@@ -129,7 +129,7 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
               final soundName = s["soundName"];
 
               alarmEnabled[soundName] = s["alarmEnabled"] ?? false;
-              vibrationLevels[soundName] = s["vibrationLevel"] ?? 1;
+              vibrationLevels[soundName] = s["vibrationType"] ?? 1;
               soundIds[soundName] = soundId;
               soundKinds[soundName] = soundKind;
 
@@ -192,6 +192,47 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
       }
     } catch (e) {
       debugPrint("❌ 알람 설정 저장 에러: $e");
+    }
+  }
+
+  //진동 설정 업데이트
+  Future<void> _updateVibrationSetting(String soundName, int vibrationType) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("accessToken");
+      if (token == null) return;
+
+      final soundId = soundIds[soundName];
+      final soundKind = soundKinds[soundName];
+
+      final url = Uri.parse("$_baseUrl/api/sound/setting/vibration");
+      final body = jsonEncode({
+        "soundKind": soundKind,
+        "soundId": soundId,
+        "vibrationType": vibrationType, //1~5
+      });
+
+      debugPrint("📡 진동 설정 API 호출");
+      debugPrint("➡️ URL: $url");
+      debugPrint("➡️ Body: $body");
+
+      final response = await http.put(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: body,
+      );
+
+      debugPrint("⬅️ Response Code: ${response.statusCode}");
+      debugPrint("⬅️ Response Body: ${response.body}");
+
+      if (response.statusCode != 200) {
+        debugPrint("❌ 진동 설정 저장 실패: ${response.statusCode}");
+      }
+    } catch (e) {
+      debugPrint("❌ 진동 설정 저장 에러: $e");
     }
   }
 
@@ -446,7 +487,8 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
               setState(() {
                 vibrationLevels[name] = val;
               });
-              _updateAlarmSetting(name, alarmEnabled[name] ?? false, val);
+              //진동 API 호출
+              _updateVibrationSetting(name, val);
             },
           )
         ],
