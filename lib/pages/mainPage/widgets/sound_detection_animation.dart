@@ -58,44 +58,49 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 300,
-      height: 300,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // 펄스 링들
-          AnimatedBuilder(
-            animation: _controller,
-            builder: (_, __) {
-              final t = _controller.value;
-              return Stack(
-                children: [
-                  _buildPulseRing((t + 0.0) % 1.0),
-                  _buildPulseRing((t + 0.33) % 1.0),
-                  _buildPulseRing((t + 0.66) % 1.0),
-                ],
-              );
-            },
-          ),
-          // 중앙 원
-          _buildCenterCircle(),
-          // 중앙 아이콘 (귀와 눈)
-          _buildCenterIcon(),
-        ],
+    return ClipRect(
+      child: SizedBox(
+        width: 302,  // 최대 애니메이션 크기로 제한
+        height: 302, // 최대 애니메이션 크기로 제한
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            // 펄스 링들
+            AnimatedBuilder(
+              animation: _controller,
+              builder: (_, __) {
+                final t = _controller.value;
+                return Stack(
+                  alignment: Alignment.center,
+                  clipBehavior: Clip.none,
+                  children: [
+                    _buildPulseRing((t + 0.0) % 1.0),
+                    _buildPulseRing((t + 0.33) % 1.0),
+                    _buildPulseRing((t + 0.66) % 1.0),
+                  ],
+                );
+              },
+            ),
+            // 중앙 원
+            _buildCenterCircle(),
+            // 중앙 아이콘 (귀와 눈)
+            _buildCenterIcon(),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildPulseRing(double progress) {
-    // 데시벨에 따라 기본 크기 조절 (-160dB ~ 0dB 범위를 100 ~ 200 픽셀로 매핑)
+    // 데시벨에 따라 최대 크기 조절 (-160dB ~ 0dB 범위를 156 ~ 302 픽셀로 매핑)
     final dbRange = 160.0; // -160dB에서 0dB까지
     final normalizedDb = (widget.currentDb + dbRange) / dbRange; // 0.0 ~ 1.0
-    final baseDiameter = 100 + (normalizedDb * 100); // 100 ~ 200 픽셀
+    final maxDiameter = 156 + (normalizedDb * 146); // 156 ~ 302 픽셀
     
-    // 데시벨에 따라 펄스 크기도 조절 (높은 데시벨 = 더 큰 펄스)
-    final maxScale = 1.0 + (normalizedDb * 2.0); // 1.0 ~ 3.0
-    final scale = 1.0 + (maxScale - 1.0) * progress;
+    // 중앙 원(156px)에서 시작해서 최대 크기까지 퍼져 나가는 방식
+    final startDiameter = 156.0;
+    final diameter = startDiameter + (maxDiameter - startDiameter) * progress;
     
     // 펄스 링은 점점 옅어지는 효과 (초록색 40%부터, 빨간색/파란색 100%부터)
     final soundColor = _getSoundColor();
@@ -103,27 +108,22 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
     final startOpacity = isGreen ? 0.4 : 1.0;
     final opacity = (startOpacity * (1.0 - progress * progress)).clamp(0.0, 1.0);
     
-    return Transform.scale(
-      scale: scale,
-      child: Container(
-        width: baseDiameter,
-        height: baseDiameter,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: soundColor.withOpacity(opacity),
-            width: 6,
-          ),
+    return Container(
+      width: diameter,
+      height: diameter,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: soundColor.withOpacity(opacity),
+          width: 6,
         ),
       ),
     );
   }
 
   Widget _buildCenterCircle() {
-    // 데시벨에 따라 중앙 원 크기도 조절
-    final dbRange = 160.0;
-    final normalizedDb = (widget.currentDb + dbRange) / dbRange;
-    final centerSize = 100 + (normalizedDb * 100); // 100 ~ 200 픽셀
+    // 중앙 원 크기를 156x156으로 고정
+    final centerSize = 156.0;
     
     // 중앙 원은 고정 색상 (초록색 40%, 빨간색/파란색 100%)
     final soundColor = _getSoundColor();
@@ -146,12 +146,12 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
 
   Widget _buildCenterIcon() {
     return Container(
-      width: 80,
-      height: 80,
+      width: 120,  // 156의 약 77% 크기로 조정
+      height: 120, // 156의 약 77% 크기로 조정
       child: Image.asset(
         _getStateIcon(),
-        width: 80,
-        height: 80,
+        width: 120,
+        height: 120,
         fit: BoxFit.contain,
       ),
     );
@@ -195,32 +195,45 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
 
   Color _getSoundColor() {
     // soundName이 있고 "Unknown"이 아닌 경우에만 해당 소리의 색상 사용 (탐지 성공)
-    if (widget.soundName != null && widget.soundName != "Unknown" && widget.soundName != "알 수 없음") {
+    if (widget.soundName != null && widget.soundName != "Unknown" && widget.soundName != "알 수 없음" && widget.soundName != "UNKNOWN") {
       switch (widget.soundName) {
         // 빨간색 (비상/경고)
-        case "Emergency":
-        case "비상 경보음":
-        case "Car Horn":
-        case "자동차 경적 소리":
+        case "FIRE_ALARM":
+        case "Fire/Smoke Alarm":
         case "Fire Alarm":
         case "화재 경보 소리":
+        case "SIREN":
+        case "Siren":
+        case "Emergency":
+        case "비상 경보음":
+        case "CAR_HORN":
+        case "Car Honk":
+        case "Car Horn":
+        case "자동차 경적 소리":
           return const Color(0xFFFFD7D4); // 빨간색
         
         // 초록색 (일상)
+        case "PHONE_RING":
         case "Phone Ring":
         case "전화 벨소리":
+        case "DOOR_OPEN_CLOSE":
+        case "Door In-Use":
         case "Door":
         case "문 여닫는 소리":
+        case "DOORBELL":
         case "Doorbell":
         case "초인종 소리":
         case "Knocking": // 노크도 문 소리와 같은 초록색
           return const Color(0xFF9FFF55); // 초록색
         
         // 파란색 (동물)
+        case "DOG_BARK":
         case "Dog Bark":
         case "개 짖는 소리":
+        case "CAT_MEOW":
         case "Cat Meow":
         case "고양이 우는 소리":
+        case "BABY_CRY":
         case "Baby Cry":
         case "아기 우는 소리":
           return const Color(0xFFD4E2FF); // 파란색
@@ -237,46 +250,78 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
   }
 
   String _getSoundNameIcon(String soundName) {
-    // alarm_set.dart의 기본 소리 목록과 일치하도록 설정
+    // 백엔드에서 반환하는 모든 값들을 처리
     switch (soundName) {
-      // 기본 동물 소리 (alarm_set.dart와 매칭)
+      // 강아지 소리
+      case "DOG_BARK":
       case "Dog Bark":
       case "개 짖는 소리":
         return 'assets/images/dog.png';
+      
+      // 고양이 소리
+      case "CAT_MEOW":
       case "Cat Meow":
       case "고양이 우는 소리":
         return 'assets/images/cat.png';
+      
+      // 아기 우는 소리
+      case "BABY_CRY":
       case "Baby Cry":
       case "아기 우는 소리":
         return 'assets/images/babycry.png';
       
-      // 비상/경고 소리 (alarm_set.dart와 매칭)
-      case "Emergency":
-      case "비상 경보음":
-        return 'assets/images/emergency.png';
-      case "Car Horn":
-      case "자동차 경적 소리":
-        return 'assets/images/carsound.png';
-      case "Fire Alarm":
-      case "화재 경보 소리":
-        return 'assets/images/fire.png';
-      
-      // 일상 소리 (alarm_set.dart와 매칭)
+      // 전화 벨소리
+      case "PHONE_RING":
       case "Phone Ring":
       case "전화 벨소리":
         return 'assets/images/phonecall.png';
-      case "Door":
-      case "문 여닫는 소리":
-        return 'assets/images/door.png';
+      
+      // 초인종 소리
+      case "DOORBELL":
       case "Doorbell":
       case "초인종 소리":
         return 'assets/images/bell.png';
       
-      // 추가 소리들
+      // 문 여닫는 소리
+      case "DOOR_OPEN_CLOSE":
+      case "Door In-Use":
+      case "Door":
+      case "문 여닫는 소리":
+        return 'assets/images/door.png';
+      
+      // 화재 경보 소리
+      case "FIRE_ALARM":
+      case "Fire/Smoke Alarm":
+      case "Fire Alarm":
+      case "화재 경보 소리":
+        return 'assets/images/fire.png';
+      
+      // 자동차 경적 소리
+      case "CAR_HORN":
+      case "Car Honk":
+      case "Car Horn":
+      case "자동차 경적 소리":
+        return 'assets/images/carsound.png';
+      
+      // 비상 경보음
+      case "SIREN":
+      case "Siren":
+      case "Emergency":
+      case "비상 경보음":
+        return 'assets/images/emergency.png';
+      
+      // Unknown
+      case "UNKNOWN":
+      case "Unknown":
+      case "알 수 없음":
+        // Unknown은 랜덤 아이콘 사용
+        return _getColorMatchingIcon(widget.detectionColor ?? const Color(0xFFD4E2FF));
+      
+      // 추가 소리들 (기존 코드 유지)
       case "Knocking":
-        return 'assets/images/door.png'; // 노크 소리는 문 소리 아이콘 사용
+        return 'assets/images/door.png';
       case "Microwave":
-        return 'assets/images/fix.png'; // 전자레인지는 수리 아이콘 사용
+        return 'assets/images/fix.png';
       case "Laptop":
         return 'assets/images/laptop.jpg';
       case "Trash":
@@ -285,7 +330,7 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
         return 'assets/images/sosaw.png';
       
       default:
-        // 기본 소리가 아닌 경우 파란색 아이콘 사용
+        // 알 수 없는 소리명인 경우 파란색 아이콘 사용
         return 'assets/icon_blue.png';
     }
   }

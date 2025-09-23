@@ -99,7 +99,10 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onAmplitudeChanged(double db) {
     setState(() {
       _currentDb = db;
-      _currentState = _determineState(db);
+      // 결과 표시 중에는 상태 변경하지 않음
+      if (!_showResult) {
+        _currentState = _determineState(db);
+      }
       // _isDetecting은 파일 녹음 중일 때만 true로 설정
     });
     
@@ -129,6 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
           print('⏰ 결과 표시 완료 - 새로운 랜덤 색상 선택');
           setState(() {
             _showResult = false;
+            _detectedSoundName = null; // 결과 초기화
             // 7초 후 새로운 랜덤 색상 선택
             _detectionColor = _getRandomColor();
             print('🎨 새로운 랜덤 색상 선택: ${_detectionColor!.value.toRadixString(16)}');
@@ -182,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // ==================== 소리 탐지 ====================
   
   Future<void> _startSoundDetection() async {
-    if (_isDetecting) return;
+    if (_isDetecting || _showResult) return; // 결과 표시 중일 때도 차단
     
     // 매번 새로운 랜덤 색상 생성 (탐지 시작 시마다)
     _detectionColor = _getRandomColor();
