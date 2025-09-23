@@ -10,8 +10,8 @@ class AudioService {
   factory AudioService() => _instance;
   AudioService._internal();
 
-  final AudioRecorder _recorder = AudioRecorder();
-  final AudioRecorder _detectionRecorder = AudioRecorder();
+  AudioRecorder? _recorder;
+  AudioRecorder? _detectionRecorder;
   StreamSubscription<Amplitude>? _ampSub;
   
   // 상태 관리
@@ -42,7 +42,11 @@ class AudioService {
         return false;
       }
 
-      if (!await _recorder.hasPermission()) {
+      // AudioRecorder 인스턴스 생성
+      _recorder = AudioRecorder();
+      _detectionRecorder = AudioRecorder();
+
+      if (!await _recorder!.hasPermission()) {
         print('❌ 오디오 권한 없음');
         return false;
       }
@@ -65,8 +69,13 @@ class AudioService {
     }
 
     try {
+      if (_recorder == null) {
+        print('❌ AudioRecorder가 초기화되지 않음');
+        return false;
+      }
+
       // 데시벨 스트림 구독 (100ms 간격으로 업데이트)
-      _ampSub = _recorder
+      _ampSub = _recorder!
           .onAmplitudeChanged(const Duration(milliseconds: 100))
           .listen((amp) {
         final db = amp.current ?? 0.0;
@@ -87,7 +96,7 @@ class AudioService {
       _currentTempPath = await _createRecordingPath();
       
       // 실시간 스트리밍 시작 (데시벨 측정용)
-      await _recorder.start(
+      await _recorder!.start(
         const RecordConfig(
           encoder: AudioEncoder.pcm16bits,
           sampleRate: 44100, // 원래 코드와 동일
@@ -106,7 +115,7 @@ class AudioService {
 
   Future<void> stopRealTimeMonitoring() async {
     try {
-      await _recorder.stop();
+      await _recorder?.stop();
       _ampSub?.cancel();
       _isMonitoring = false;
       print('🛑 실시간 모니터링 중지 완료');
@@ -133,7 +142,12 @@ class AudioService {
       print('📁 녹음 파일 경로: $filePath');
 
       // 5초간 파일 녹음 시작 (원래 코드와 동일한 설정)
-      await _detectionRecorder.start(
+      if (_detectionRecorder == null) {
+        print('❌ DetectionRecorder가 초기화되지 않음');
+        return null;
+      }
+      
+      await _detectionRecorder!.start(
         const RecordConfig(
           encoder: AudioEncoder.wav,
           sampleRate: 16000, // 에뮬레이터 호환성을 위한 낮은 샘플 레이트
@@ -153,7 +167,7 @@ class AudioService {
   Future<File?> stopFileRecording(String filePath) async {
     try {
       // 탐지용 녹음기 중지
-      await _detectionRecorder.stop();
+      await _detectionRecorder?.stop();
       
       _isDetecting = false;
       
@@ -206,8 +220,10 @@ class AudioService {
   Future<void> dispose() async {
     try {
       _ampSub?.cancel();
-      await _recorder.stop();
-      await _recorder.dispose();
+      await _recorder?.stop();
+      await _recorder?.dispose();
+      await _detectionRecorder?.stop();
+      await _detectionRecorder?.dispose();
       _isInitialized = false;
       _isDetecting = false;
       print('✅ AudioService 정리 완료');

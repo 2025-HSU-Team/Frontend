@@ -5,12 +5,14 @@ class DetectionStatusWidget extends StatefulWidget {
   final DetectionState state;
   final double currentDb;
   final bool isDetecting;
+  final Color? detectionColor; // 인식중일 때 사용할 랜덤 색상
 
   const DetectionStatusWidget({
     super.key,
     required this.state,
     required this.currentDb,
     required this.isDetecting,
+    this.detectionColor, // 옵셔널 파라미터
   });
 
   @override
@@ -80,12 +82,14 @@ class _DetectionStatusWidgetState extends State<DetectionStatusWidget>
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // 데시벨 표시
+        // 데시벨 표시 (파란색으로 고정)
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           decoration: BoxDecoration(
-            color: _getStateColor(),
+            color: Colors.blue,
             borderRadius: BorderRadius.circular(25),
           ),
           child: Text(
@@ -94,34 +98,32 @@ class _DetectionStatusWidgetState extends State<DetectionStatusWidget>
           ),
         ),
         const SizedBox(height: 20),
-        // 상태 표시
+        // 상태 표시 (파란색으로 고정)
         Container(
-          width: 180, // 고정 너비
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: widget.isDetecting ? Colors.purple[50] : Colors.blue[50],
+            color: Colors.blue[50],
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: widget.isDetecting ? Colors.purple : Colors.blue,
+              color: Colors.blue,
             ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center, // 중앙 정렬
             children: [
               Image.asset(
-                widget.isDetecting ? 'assets/images/redmike.png' : 'assets/images/bluemike.png',
+                'assets/images/bluemike.png',
                 width: 20,
                 height: 20,
-                color: widget.isDetecting ? Colors.purple : Colors.blue,
+                color: Colors.blue,
               ),
               const SizedBox(width: 8),
-              SizedBox(
-                width: 120, // 고정 너비로 텍스트 영역 제한
+              Expanded(
                 child: Text(
                   _detectionText,
                   textAlign: TextAlign.center, // 텍스트 중앙 정렬
-                  style: TextStyle(
-                    color: widget.isDetecting ? Colors.purple : Colors.blue,
+                  style: const TextStyle(
+                    color: Colors.blue,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

@@ -68,18 +68,29 @@ class BackendService {
       ));
       print('📎 파일 첨부 완료: ${p.basename(filePath)}');
       
-      // 요청 전송
+      // 요청 전송 (타임아웃 30초)
       print('📤 백엔드로 소리 파일 전송 시작...');
-      final response = await request.send();
-      final result = await http.Response.fromStream(response);
-      
-      print('📥 응답 상태 코드: ${result.statusCode}');
-      print('📥 응답 본문: ${result.body}');
-      
-      if (result.statusCode == 200) {
-        _handleResponse(result.body);
-      } else {
-        onError?.call('서버 오류: ${result.statusCode}');
+      final client = http.Client();
+      try {
+        final response = await client.send(request).timeout(
+          const Duration(seconds: 30),
+          onTimeout: () {
+            print('⏰ 백엔드 요청 타임아웃 (30초)');
+            throw Exception('요청 시간 초과');
+          },
+        );
+        final result = await http.Response.fromStream(response);
+        
+        print('📥 응답 상태 코드: ${result.statusCode}');
+        print('📥 응답 본문: ${result.body}');
+        
+        if (result.statusCode == 200) {
+          _handleResponse(result.body);
+        } else {
+          onError?.call('서버 오류: ${result.statusCode}');
+        }
+      } finally {
+        client.close();
       }
       
     } catch (e) {
