@@ -67,6 +67,8 @@ class BackendService {
         contentType: MediaType.parse(mimeType),
       ));
       print('📎 파일 첨부 완료: ${p.basename(filePath)}');
+      print('📎 MIME 타입: $mimeType');
+      print('📎 파일 크기: ${(await file.stat()).size} bytes');
       
       // 요청 전송 (타임아웃 30초)
       print('📤 백엔드로 소리 파일 전송 시작...');

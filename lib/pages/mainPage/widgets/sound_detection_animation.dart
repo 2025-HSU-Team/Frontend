@@ -7,6 +7,7 @@ class SoundDetectionAnimation extends StatefulWidget {
   final double currentDb;
   final bool isDetecting;
   final String? soundName; // 새로 추가된 파라미터
+  final Color? detectionColor; // 인식중일 때 사용할 랜덤 색상
 
   const SoundDetectionAnimation({
     super.key,
@@ -14,6 +15,7 @@ class SoundDetectionAnimation extends StatefulWidget {
     required this.currentDb,
     required this.isDetecting,
     this.soundName, // 옵셔널 파라미터
+    this.detectionColor, // 옵셔널 파라미터
   });
 
   @override
@@ -156,23 +158,29 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
   }
 
   String _getStateIcon() {
-    // soundName이 있고 "Unknown"이 아닌 경우에만 특정 아이콘 사용
+    // soundName이 있고 "Unknown"이 아닌 경우에만 특정 아이콘 사용 (탐지 성공)
     if (widget.soundName != null && widget.soundName != "Unknown" && widget.soundName != "알 수 없음") {
       return _getSoundNameIcon(widget.soundName!);
     }
     
-    // soundName이 null이거나 "Unknown"인 경우 랜덤 아이콘 사용
-    return _getRandomIconPath();
+    // 그 외의 경우 (앱 시작, 탐지 시작, 탐지 실패)에는 랜덤 색상과 매칭되는 아이콘 사용
+    if (widget.detectionColor != null) {
+      return _getColorMatchingIcon(widget.detectionColor!);
+    }
+    
+    // 기본 대기 상태일 때는 기본 아이콘 사용
+    return 'assets/icon_blue.png';
   }
 
-  // 랜덤 아이콘 경로를 반환하는 헬퍼 메서드
-  String _getRandomIconPath() {
-    final icons = [
-      'assets/icon_blue.png',
-      'assets/icon_green.png', 
-      'assets/icon_red.png',
-    ];
-    return icons[math.Random().nextInt(icons.length)];
+  // 색상과 매칭되는 아이콘 경로를 반환하는 헬퍼 메서드
+  String _getColorMatchingIcon(Color color) {
+    if (color.value == const Color(0xFF9FFF55).value) {
+      return 'assets/icon_green.png';
+    } else if (color.value == const Color(0xFFFFD7D4).value) {
+      return 'assets/icon_red.png';
+    } else {
+      return 'assets/icon_blue.png';
+    }
   }
 
   // 랜덤 색상을 반환하는 헬퍼 메서드
@@ -186,13 +194,8 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
   }
 
   Color _getSoundColor() {
-    // 인식중일 때는 고정된 랜덤 색상 사용
-    if (widget.isDetecting) {
-      return _detectionColor;
-    }
-    
-    // soundName에 따라 색상 결정
-    if (widget.soundName != null) {
+    // soundName이 있고 "Unknown"이 아닌 경우에만 해당 소리의 색상 사용 (탐지 성공)
+    if (widget.soundName != null && widget.soundName != "Unknown" && widget.soundName != "알 수 없음") {
       switch (widget.soundName) {
         // 빨간색 (비상/경고)
         case "Emergency":
@@ -224,8 +227,13 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
       }
     }
     
+    // 그 외의 경우 (앱 시작, 탐지 시작, 탐지 실패)에는 랜덤 색상 사용
+    if (widget.detectionColor != null) {
+      return widget.detectionColor!;
+    }
+    
     // 기본 색상 (soundName이 없거나 매칭되지 않는 경우)
-    return const Color(0xFFD4E2FF); // 기본 파란색
+    return const Color(0xFF9FFF55); // 기본 초록색
   }
 
   String _getSoundNameIcon(String soundName) {
@@ -277,8 +285,8 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
         return 'assets/images/sosaw.png';
       
       default:
-        // 기본 소리가 아닌 경우 랜덤 아이콘 사용
-        return _getRandomIconPath();
+        // 기본 소리가 아닌 경우 파란색 아이콘 사용
+        return 'assets/icon_blue.png';
     }
   }
 
