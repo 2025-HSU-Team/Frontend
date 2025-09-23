@@ -23,15 +23,29 @@ class SoundDetectionAnimation extends StatefulWidget {
 class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  late Color _detectionColor; // 인식중일 때 사용할 고정 색상
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 4),
     );
     _controller.repeat();
+    _detectionColor = _getRandomColor(); // 초기 랜덤 색상 설정
+  }
+
+  @override
+  void didUpdateWidget(SoundDetectionAnimation oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // 인식 상태가 변경될 때마다 새로운 랜덤 색상 생성
+    if (widget.isDetecting != oldWidget.isDetecting) {
+      if (widget.isDetecting) {
+        _detectionColor = _getRandomColor(); // 인식 시작 시 새로운 랜덤 색상
+      }
+    }
   }
 
   @override
@@ -161,7 +175,22 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
     return icons[math.Random().nextInt(icons.length)];
   }
 
+  // 랜덤 색상을 반환하는 헬퍼 메서드
+  Color _getRandomColor() {
+    final colors = [
+      const Color(0xFF9FFF55), // 초록색 (#9FFF55)
+      const Color(0xFFFFD7D4), // 빨간색 (#FFD7D4)
+      const Color(0xFFD4E2FF), // 파란색 (#D4E2FF)
+    ];
+    return colors[math.Random().nextInt(colors.length)];
+  }
+
   Color _getSoundColor() {
+    // 인식중일 때는 고정된 랜덤 색상 사용
+    if (widget.isDetecting) {
+      return _detectionColor;
+    }
+    
     // soundName에 따라 색상 결정
     if (widget.soundName != null) {
       switch (widget.soundName) {

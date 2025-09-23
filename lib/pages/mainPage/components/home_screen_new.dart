@@ -38,9 +38,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // 상수
   static const int _detectionCooldown = 5;
-  static const double _normalThreshold = -60;
-  static const double _warningThreshold = -40;  // 실제 기기에서 소리 탐지 시작
-  static const double _dangerThreshold = -20;
+  static const double _normalThreshold = -50;   // 대기 상태 (매우 조용)
+  static const double _warningThreshold = -30;  // 소리 탐지 시작 (일반 대화 수준)
+  static const double _dangerThreshold = -10;   // 위험 상태 (시끄러움)
 
   @override
   void initState() {
@@ -94,16 +94,20 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _detectedSoundName = result['soundName'];
       _lastDetectionResult = result; // 전체 응답 저장
-      _showResult = true;
+      // Unknown이 아닌 경우에만 결과 표시
+      _showResult = result['soundName'] != 'Unknown' && result['soundName'] != '알 수 없음';
     });
     
-    // 5초 후 결과 숨김
-    _resultTimer?.cancel();
-    _resultTimer = Timer(const Duration(seconds: 5), () {
-      if (mounted) {
-        setState(() => _showResult = false);
-      }
-    });
+    // Unknown이 아닌 경우에만 7초 후 결과 숨김
+    if (_showResult) {
+      _resultTimer?.cancel();
+      _resultTimer = Timer(const Duration(seconds: 7), () {
+        if (mounted) {
+          print('⏰ 결과 표시 완료 - 다시 소리 탐지 가능');
+          setState(() => _showResult = false);
+        }
+      });
+    }
   }
 
   void _onError(String error) {
@@ -127,8 +131,8 @@ class _HomeScreenState extends State<HomeScreen> {
   // ==================== 자동 탐지 ====================
   
   void _checkAutoDetection(double db) {
-    // 파일 녹음 중이 아닐 때만 자동 탐지
-    if (_isDetecting) return;
+    // 파일 녹음 중이거나 결과 표시 중일 때는 자동 탐지 차단
+    if (_isDetecting || _showResult) return;
     
     final now = DateTime.now();
     if (_lastDetectionTime != null &&
@@ -257,8 +261,8 @@ class _HomeScreenState extends State<HomeScreen> {
               // 컨트롤 버튼들 (현재 비어있음)
               const ControlButtonsWidget(),
               
-              // 결과 표시
-              if (_showResult) ...[
+              // 결과 표시 (Unknown이 아닌 경우에만)
+              if (_showResult && _detectedSoundName != null && _detectedSoundName != 'Unknown' && _detectedSoundName != '알 수 없음') ...[
                 const SizedBox(height: 20),
                 Container(
                   padding: const EdgeInsets.all(16),
