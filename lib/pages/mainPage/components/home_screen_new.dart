@@ -1,0 +1,389 @@
+import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:math' as math;
+
+// 모델들
+import '../models/detection_state.dart';
+
+// 서비스들
+import '../services/audio_service.dart';
+import '../services/backend_service.dart';
+
+// 위젯들
+import '../widgets/sound_detection_animation.dart';
+import '../widgets/detection_status_widget.dart';
+import '../widgets/control_buttons_widget.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  // 서비스 인스턴스
+  final AudioService _audioService = AudioService();
+  final BackendService _backendService = BackendService();
+
+  // 상태 관리
+  DetectionState _currentState = DetectionState.idle;
+  double _currentDb = 0.0;
+  bool _isDetecting = false;
+  String? _detectedSoundName;
+  bool _showResult = false;
+  Map<String, dynamic>? _lastDetectionResult; // 백엔드 응답 전체 저장
+  DateTime? _lastDetectionTime;
+  Timer? _detectionTimer;
+  Timer? _resultTimer;
+  Color? _detectionColor; // 인식중일 때 사용할 랜덤 색상
+  bool _isAnalyzing = false; // 분석 중 플래그 (중복 통신 방지)
+
+  // 상수
+  static const int _detectionCooldown = 5;
+  static const double _normalThreshold = -50;   // 대기 상태 (매우 조용)
+  static const double _warningThreshold = -30;  // 소리 탐지 시작 (일반 대화 수준)
+  static const double _dangerThreshold = -10;   // 위험 상태 (시끄러움)
+
+  // 랜덤 색상 생성
+  Color _getRandomColor() {
+    final colors = [
+      const Color(0xFF9FFF55), // 초록색
+      const Color(0xFFFFD7D4), // 빨간색
+      const Color(0xFFD4E2FF), // 파란색
+    ];
+    return colors[math.Random().nextInt(colors.length)];
+  }
+
+  // 상단 아이콘 경로 결정 (Icon.png로 고정)
+  String _getTopIconPath() {
+    return 'assets/Icon.png';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // 앱 시작 시 랜덤 색상 설정
+    _detectionColor = _getRandomColor();
+    print('🚀 앱 시작 - 초기 랜덤 색상 설정: ${_detectionColor!.value.toRadixString(16)}');
+    _initializeServices();
+  }
+
+  @override
+  void dispose() {
+    _detectionTimer?.cancel();
+    _resultTimer?.cancel();
+    _audioService.dispose();
+    super.dispose();
+  }
+
+  // ==================== 서비스 초기화 ====================
+  
+  Future<void> _initializeServices() async {
+    // 백엔드 서비스 초기화
+    await _backendService.initialize();
+    
+    // 콜백 설정
+    _audioService.onAmplitudeChanged = _onAmplitudeChanged;
+    _audioService.onFileRecorded = _onFileRecorded;
+    _backendService.onSoundDetected = _onSoundDetected;
+    _backendService.onError = _onError;
+    
+    // 오디오 서비스 초기화 및 실시간 모니터링 시작
+    await _audioService.initialize();
+    await _audioService.startRealTimeMonitoring();
+  }
+
+  // ==================== 콜백 함수들 ====================
+  
+  void _onAmplitudeChanged(double db) {
+    setState(() {
+      _currentDb = db;
+      // 결과 표시 중에는 상태 변경하지 않음
+      if (!_showResult) {
+        _currentState = _determineState(db);
+      }
+      // _isDetecting은 파일 녹음 중일 때만 true로 설정
+    });
+    
+    _checkAutoDetection(db);
+  }
+
+  void _onFileRecorded(String filePath) {
+    print('🎵 파일 녹음 완료: $filePath');
+    // analyzeSound는 _stopSoundDetection에서 호출하므로 여기서는 제거
+  }
+
+  void _onSoundDetected(Map<String, dynamic> result) {
+    _isAnalyzing = false; // 분석 완료 플래그 리셋
+    
+    setState(() {
+      _detectedSoundName = result['soundName'];
+      _lastDetectionResult = result; // 전체 응답 저장
+      // Unknown이 아닌 경우에만 결과 표시
+      _showResult = result['soundName'] != 'Unknown' && result['soundName'] != '알 수 없음';
+    });
+    
+    // Unknown이 아닌 경우에만 7초 후 결과 숨김
+    if (_showResult) {
+      _resultTimer?.cancel();
+      _resultTimer = Timer(const Duration(seconds: 7), () {
+        if (mounted) {
+          print('⏰ 결과 표시 완료 - 새로운 랜덤 색상 선택');
+          setState(() {
+            _showResult = false;
+            _detectedSoundName = null; // 결과 초기화
+            // 7초 후 새로운 랜덤 색상 선택
+            _detectionColor = _getRandomColor();
+            print('🎨 새로운 랜덤 색상 선택: ${_detectionColor!.value.toRadixString(16)}');
+          });
+        }
+      });
+    } else {
+      // Unknown인 경우 기존 색상 유지
+      print('❓ Unknown 결과 - 기존 색상 유지: ${_detectionColor?.value.toRadixString(16)}');
+    }
+  }
+
+  void _onError(String error) {
+    _isAnalyzing = false; // 분석 실패 시에도 플래그 리셋
+    _showErrorDialog(error);
+  }
+
+  // ==================== 상태 결정 ====================
+  
+  DetectionState _determineState(double db) {
+    if (db < _normalThreshold) {
+      return DetectionState.idle;
+    } else if (db < _warningThreshold) {
+      return DetectionState.normal;
+    } else if (db < _dangerThreshold) {
+      return DetectionState.warning;
+    } else {
+      return DetectionState.danger;
+    }
+  }
+
+  // ==================== 자동 탐지 ====================
+  
+  void _checkAutoDetection(double db) {
+    // 파일 녹음 중, 결과 표시 중, 분석 중일 때는 자동 탐지 차단
+    if (_isDetecting || _showResult || _isAnalyzing) return;
+    
+    final now = DateTime.now();
+    if (_lastDetectionTime != null &&
+        now.difference(_lastDetectionTime!).inSeconds < _detectionCooldown) {
+      return;
+    }
+    
+    if (db >= _warningThreshold) {
+      print('🔍 소음 감지됨 (${db.toStringAsFixed(1)}dB) - 자동 소리 탐지 시작');
+      _startSoundDetection();
+      _lastDetectionTime = now;
+    }
+  }
+
+  // ==================== 소리 탐지 ====================
+  
+  Future<void> _startSoundDetection() async {
+    if (_isDetecting || _showResult) return; // 결과 표시 중일 때도 차단
+    
+    // 매번 새로운 랜덤 색상 생성 (탐지 시작 시마다)
+    _detectionColor = _getRandomColor();
+    print('🎨 탐지 시작 - 새로운 랜덤 색상 생성: ${_detectionColor!.value.toRadixString(16)}');
+    
+    setState(() {
+      _isDetecting = true;
+      _currentState = DetectionState.detecting;
+    });
+    
+    print('🎙️ 소리 탐지 시작 (색상: ${_detectionColor!.value.toRadixString(16)})');
+
+    try {
+      // 파일 녹음 시작
+      final filePath = await _audioService.startFileRecording();
+      if (filePath == null) {
+        _showErrorDialog('녹음 시작에 실패했습니다.');
+        return;
+      }
+
+      // 5초 후 녹음 중지
+      _detectionTimer?.cancel();
+      _detectionTimer = Timer(const Duration(seconds: 2), () async {
+        await _stopSoundDetection(filePath);
+      });
+      
+    } catch (e) {
+      print('❌ 소리 탐지 시작 실패: $e');
+      setState(() {
+        _isDetecting = false;
+        _currentState = _determineState(_currentDb);
+      });
+      _audioService.startRealTimeMonitoring();
+    }
+  }
+
+  Future<void> _stopSoundDetection(String filePath) async {
+    try {
+      final file = await _audioService.stopFileRecording(filePath);
+      if (file != null && !_isAnalyzing) {
+        _isAnalyzing = true;
+        print('🔍 백엔드 분석 시작 (중복 방지)');
+        _backendService.analyzeSound(filePath);
+      }
+    } catch (e) {
+      print('❌ 소리 탐지 중지 실패: $e');
+    } finally {
+      setState(() {
+        _isDetecting = false;
+        _currentState = _determineState(_currentDb);
+      });
+      await _audioService.startRealTimeMonitoring();
+    }
+  }
+
+
+
+  // ==================== 다이얼로그 ====================
+  
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('오류'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('확인'),
+          )
+        ],
+      ),
+    );
+  }
+
+
+  // ==================== UI 빌드 ====================
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // 상단 아이콘
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 30),
+                      child: Image.asset(
+                        _getTopIconPath(),
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    
+                    // 메인 애니메이션
+                    SoundDetectionAnimation(
+                      state: _currentState,
+                      currentDb: _currentDb,
+                      isDetecting: _isDetecting,
+                      soundName: _detectedSoundName, // 감지된 소리명 전달
+                      detectionColor: _detectionColor, // 인식중일 때 사용할 랜덤 색상
+                    ),
+                    const SizedBox(height: 30),
+                    
+                    // 상태 표시
+                    DetectionStatusWidget(
+                      state: _currentState,
+                      currentDb: _currentDb,
+                      isDetecting: _isDetecting,
+                      detectionColor: _detectionColor, // 인식중일 때 사용할 랜덤 색상
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    // 컨트롤 버튼들 (현재 비어있음)
+                    const ControlButtonsWidget(),
+                    
+                    // 결과 표시 (Unknown이 아닌 경우에만)
+                    if (_showResult && _detectedSoundName != null && _detectedSoundName != 'Unknown' && _detectedSoundName != '알 수 없음') ...[
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.green),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.green),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '인식된 소리: $_detectedSoundName',
+                                    style: const TextStyle(
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  if (_lastDetectionResult != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '알림: ${_lastDetectionResult!['alarmEnabled'] == true ? '활성화' : '비활성화'}',
+                                      style: const TextStyle(
+                                        color: Colors.blue,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    if (_lastDetectionResult!['alarmEnabled'] == true) ...[
+                                      Text(
+                                        '진동: 진동 ${_lastDetectionResult!['vibration'] ?? 1}',
+                                        style: const TextStyle(
+                                          color: Colors.orange,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    
+                    const SizedBox(height: 30),
+                    
+                    // TMI 텍스트
+                    const Text(
+                      'tmi: 빨간색은 무슨 의미에요~',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

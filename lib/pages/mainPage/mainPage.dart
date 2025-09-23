@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'components/home_screen.dart';
 import 'package:frontend/shared_components/bottom_navigation.dart';
 import 'package:frontend/shared_components/header_navigation.dart';
+import 'package:frontend/custom/basic_screen.dart';
+import 'package:frontend/custom/before_login.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -11,7 +13,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  int _selectedTabIndex = 0;
+  int _selectedTabIndex = 1; // 기본적으로 홈 탭 선택
   int _selectedCategoryIndex = 0;
 
   final List<String> _categories = ['일상생활', '콘서트', '연극'];
@@ -28,6 +30,20 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  // 탭별 화면 반환
+  Widget _getTabScreen(int index) {
+    switch (index) {
+      case 0: // 내소리 탭
+        return const BasicScreen();
+      case 1: // 홈 탭
+        return const HomeScreen();
+      case 2: // 옵션 탭
+        return const BeforeLogin(); // 임시로 BeforeLogin 사용
+      default:
+        return const HomeScreen();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,13 +51,8 @@ class _MainPageState extends State<MainPage> {
       body: SafeArea(
         child: Column(
           children: [
-            HeaderNavigation(
-              selectedCategoryIndex: _selectedCategoryIndex,
-              onCategoryChanged: _onCategoryChanged,
-              categories: _categories,
-            ),
             Expanded(
-              child: const HomeScreen(), // 모든 카테고리에서 HomeScreen 사용
+              child: _getTabScreen(_selectedTabIndex),
             ),
             BottomNavigation(
               selectedTabIndex: _selectedTabIndex,

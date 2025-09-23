@@ -334,14 +334,20 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
         selectedTabIndex: _selectedTabIndex,
         onTabChanged: (index) {
           if (index == 0) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const BasicScreen()),
-            );
-          } else if (index == 1) {
-            Navigator.pushReplacement(
+            // 내소리 → MainPage로 이동 (내소리 탭 선택)
+            Navigator.pushAndRemoveUntil(
+
               context,
               MaterialPageRoute(builder: (context) => const MainPage()),
+              (route) => false,
+            );
+            // MainPage에서 내소리 탭을 선택하도록 상태 전달 필요
+          } else if (index == 1) {
+            // 홈 → MainPage
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const MainPage()),
+              (route) => false,
             );
           }
         },
