@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:math'; //파형 계산용 함수
 
 import 'dart:io';
+import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
@@ -11,6 +13,7 @@ import 'package:record/record.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../shared_components/bottom_navigation.dart';
+import 'basic_screen.dart';
 
 class AddSounds extends StatefulWidget {
   //initialData
@@ -262,11 +265,16 @@ class _AddSoundsState extends State<AddSounds>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(isEdit ? '수정 완료!' : '업로드 완료!')),
       );
+
+      final data = jsonDecode(resp.body); //서버 응답 파싱
+      final sound = data["data"];         //응답 안에서 data 꺼내기
+
       return {
-        'id': soundId,
-        'name': _controller.text.trim(),
-        'emoji': _emoji,
-        'color': _selectedColor.toUpperCase(),
+        'id': sound?["SoundId"] ?? sound?["soundId"],
+        'soundKind': sound?["soundKind"] ?? "CUSTOM",
+        'name': sound?["customName"] ?? _controller.text.trim(),
+        'emoji': sound?["emoji"] ?? _emoji,
+        'color': (sound?["color"] ?? _selectedColor).toUpperCase(),
       };
     } else {
       if (!mounted) return null;
@@ -457,7 +465,7 @@ class _AddSoundsState extends State<AddSounds>
                           height: 120,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                              color: _getMicBackgroundColor(),
+                            color: _getMicBackgroundColor(),
                           ),
                           child: Center(
                             child: Image.asset(
@@ -556,7 +564,13 @@ class _AddSoundsState extends State<AddSounds>
                         onPressed: () async {
                           final res = await _uploadSound();
                           if (!context.mounted || res == null) return;
-                          Navigator.of(context).popUntil((route)=>route.isFirst);
+
+                          // ✅ 저장 후 BasicScreen으로 이동
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(builder: (context) => const BasicScreen()),
+                                (route) => false,
+                          );
                         },
                         child: const Text(
                           "소리 저장하기",
