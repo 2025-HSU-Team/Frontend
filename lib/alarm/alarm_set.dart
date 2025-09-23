@@ -1,21 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import '../shared_components/bottom_navigation.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../shared_components/bottom_navigation.dart';
 import '../pages/mainPage/mainPage.dart';
 import '../custom/basic_screen.dart';
-
-//기본 알람 9개
-final List<Map<String, dynamic>> allDefaultSounds = [
-  {"name": "비상 경보음", "color": Colors.red, "image": "assets/images/emergency.png"},
-  {"name": "자동차 경적 소리", "color": Colors.red, "image": "assets/images/carsound.png"},
-  {"name": "화재 경보 소리", "color": Colors.red, "image": "assets/images/fire.png"},
-  {"name": "전화 벨소리", "color": Colors.green, "image": "assets/images/phonecall.png"},
-  {"name": "문 여닫는 소리", "color": Colors.green, "image": "assets/images/door.png"},
-  {"name": "초인종 소리", "color": Colors.green, "image": "assets/images/bell.png"},
-  {"name": "개 짖는 소리", "color": Colors.blue, "image": "assets/images/dog.png"},
-  {"name": "고양이 우는 소리", "color": Colors.blue, "image": "assets/images/cat.png"},
-  {"name": "아기 우는 소리", "color": Colors.blue, "image": "assets/images/babycry.png"},
-];
 
 class AlarmSetScreen extends StatefulWidget {
   const AlarmSetScreen({super.key});
@@ -25,11 +15,79 @@ class AlarmSetScreen extends StatefulWidget {
 }
 
 class _AlarmSetScreenState extends State<AlarmSetScreen> {
-  //알람 ON/OFF 상태
-  final Map<String, bool> alarmEnabled = {};
+  static const String _baseUrl = 'https://13.209.61.41.nip.io';
+
+  final Map<String, Map<String, dynamic>> defaultSoundInfo = {
+    "DOG_BARK": {
+      "label": "개 짖는 소리",
+      "image": "assets/images/dog.png",
+      "color": Colors.blue,
+    },
+    "CAT_MEOW": {
+      "label": "고양이 우는 소리",
+      "image": "assets/images/cat.png",
+      "color": Colors.blue,
+    },
+    "BABY_CRY": {
+      "label": "아기 우는 소리",
+      "image": "assets/images/babycry.png",
+      "color": Colors.blue,
+    },
+    "HUMAN_LAUGH": {
+      "label": "사람 웃음 소리",
+      "image": "assets/images/smile.png",
+      "color": Colors.blue,
+    },
+    "PHONE_RING": {
+      "label": "전화 벨소리",
+      "image": "assets/images/phonecall.png",
+      "color": Colors.green,
+    },
+    "DOORBELL": {
+      "label": "초인종 소리",
+      "image": "assets/images/bell.png",
+      "color": Colors.green,
+    },
+    "DOOR_OPEN_CLOSE": {
+      "label": "문 여닫는 소리",
+      "image": "assets/images/door.png",
+      "color": Colors.green,
+    },
+    "FIRE_ALARM": {
+      "label": "화재 경보 소리",
+      "image": "assets/images/fire.png",
+      "color": Colors.red,
+    },
+    "CAR_HORN": {
+      "label": "자동차 경적 소리",
+      "image": "assets/images/carsound.png",
+      "color": Colors.red,
+    },
+    "SIREN": {
+      "label": "비상 경보음",
+      "image": "assets/images/emergency.png",
+      "color": Colors.red,
+    },
+    "KNOCK": {
+      "label": "노크 소리",
+      "image": "assets/images/knock.png",
+      "color": Colors.green,
+    },
+    "MICROWAVE": {
+      "label": "전자레인지 소리",
+      "image": "assets/images/microwave.png",
+      "color": Colors.red,
+    },
+  };
 
   //커스텀 소리 리스트
-  final List<Map<String, dynamic>> customSounds = [];
+  List<Map<String, dynamic>> customSounds = [];
+
+  //알람 상태 저장
+  Map<String, bool> alarmEnabled = {};
+  Map<String, int> vibrationLevels = {};
+  Map<String, int> soundIds = {};
+  Map<String, String> soundKinds = {};
 
   //하단 탭 상태
   int _selectedTabIndex = 2;
@@ -37,9 +95,144 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
   @override
   void initState() {
     super.initState();
-    //기본음은 모두 OFF로 시작
-    for (var sound in allDefaultSounds) {
-      alarmEnabled[sound["name"]] = false;
+    _fetchAlarmSettings();
+  }
+
+  //알람 설정 조회
+  Future<void> _fetchAlarmSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("accessToken");
+      if (token == null) return;
+
+      final url = Uri.parse("$_baseUrl/api/sound/setting");
+      final response = await http.get(
+        url,
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data["isSuccess"] == true) {
+          final List<dynamic> sounds = data["data"];
+
+          setState(() {
+            customSounds.clear();
+            alarmEnabled.clear();
+            vibrationLevels.clear();
+            soundIds.clear();
+            soundKinds.clear();
+
+            for (var s in sounds) {
+              final soundId = s["soundId"];
+              final soundKind = s["soundKind"];
+              final soundName = s["soundName"];
+
+              alarmEnabled[soundName] = s["alarmEnabled"] ?? false;
+              vibrationLevels[soundName] = s["vibrationType"] ?? 1;
+              soundIds[soundName] = soundId;
+              soundKinds[soundName] = soundKind;
+
+              if (soundKind == "CUSTOM") {
+                customSounds.add({
+                  "id": soundId,
+                  "name": soundName,
+                  "emoji": s["emoji"] ?? "",
+                  "color": s["color"] ?? "BLUE",
+                });
+              }
+            }
+          });
+        }
+      } else {
+        debugPrint("❌ 알람 설정 불러오기 실패: ${response.statusCode}");
+      }
+    } catch (e) {
+      debugPrint("❌ API 호출 에러: $e");
+    }
+  }
+
+  //알람 설정 업데이트
+  Future<void> _updateAlarmSetting(
+      String soundName, bool enabled, int vibration) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("accessToken");
+      if (token == null) return;
+
+      final soundId = soundIds[soundName];
+      final soundKind = soundKinds[soundName];
+
+      final url = Uri.parse("$_baseUrl/api/sound/setting/alarm");
+      final body = jsonEncode({
+        "soundKind": soundKind,
+        "soundId": soundId,
+        "alarmEnabled": enabled,
+        "vibrationLevel": vibration,
+      });
+
+      debugPrint("📡 알람 설정 API 호출");
+      debugPrint("➡️ URL: $url");
+      debugPrint("➡️ Body: $body");
+
+      final response = await http.put(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: body,
+      );
+
+      debugPrint("⬅️ Response Code: ${response.statusCode}");
+      debugPrint("⬅️ Response Body: ${response.body}");
+
+      if (response.statusCode != 200) {
+        debugPrint("❌ 알람 설정 저장 실패: ${response.statusCode}");
+      }
+    } catch (e) {
+      debugPrint("❌ 알람 설정 저장 에러: $e");
+    }
+  }
+
+  //진동 설정 업데이트
+  Future<void> _updateVibrationSetting(String soundName, int vibrationType) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("accessToken");
+      if (token == null) return;
+
+      final soundId = soundIds[soundName];
+      final soundKind = soundKinds[soundName];
+
+      final url = Uri.parse("$_baseUrl/api/sound/setting/vibration");
+      final body = jsonEncode({
+        "soundKind": soundKind,
+        "soundId": soundId,
+        "vibrationType": vibrationType, //1~5
+      });
+
+      debugPrint("📡 진동 설정 API 호출");
+      debugPrint("➡️ URL: $url");
+      debugPrint("➡️ Body: $body");
+
+      final response = await http.put(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: body,
+      );
+
+      debugPrint("⬅️ Response Code: ${response.statusCode}");
+      debugPrint("⬅️ Response Body: ${response.body}");
+
+      if (response.statusCode != 200) {
+        debugPrint("❌ 진동 설정 저장 실패: ${response.statusCode}");
+      }
+    } catch (e) {
+      debugPrint("❌ 진동 설정 저장 에러: $e");
     }
   }
 
@@ -54,7 +247,6 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
           Column(
             children: [
               const SizedBox(height: 44),
-              //상단 로고
               Center(
                 child: ClipOval(
                   child: Image.asset(
@@ -67,8 +259,6 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
               ),
             ],
           ),
-
-          //흰 박스
           Positioned(
             top: 137,
             left: (MediaQuery.of(context).size.width - 328) / 2,
@@ -89,100 +279,48 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        //알람 섹션
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), //안쪽 여백
-                          decoration: BoxDecoration(
-                            color: Colors.white, // 흰색 배경
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.3), //그림자 색 (회색, 투명도 30%)
-                                blurRadius: 6, //퍼짐 정도
-                                offset: const Offset(0, 3), //수직 방향 그림자 위치
-                              ),
-                            ],
-                          ),
-                          child: const Text(
-                            "알람",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xff8e8e8e), //텍스트 색
-                            ),
-                          ),
-                        ),
-
+                        _buildSectionTitle("알람"),
                         const SizedBox(height: 8),
-                        Column(
-                          children: [
-                            for (var sound in allDefaultSounds)
-                              _buildAlarmItem(
-                                name: sound["name"],
-                                color: sound["color"],
-                                image: sound["image"],
-                              ),
-                            for (var sound in customSounds)
-                              _buildAlarmItem(
-                                name: sound["name"],
-                                color: sound["color"] == "RED"
-                                    ? Colors.red
-                                    : sound["color"] == "GREEN"
-                                    ? Colors.green
-                                    : Colors.blue,
-                                emoji: sound["emoji"],
-                              ),
-                          ],
-                        ),
+
+                        //기본음
+                        for (var entry in defaultSoundInfo.entries)
+                          _buildAlarmItem(
+                            name: entry.key,
+                            label: entry.value["label"],
+                            image: entry.value["image"],
+                            color: entry.value["color"],
+                          ),
+
+                        //커스텀
+                        for (var sound in customSounds)
+                          _buildAlarmItem(
+                            name: sound["name"],
+                            emoji: sound["emoji"],
+                            color: _mapColor(sound["color"]),
+                          ),
 
                         const Divider(height: 40),
-
-                        //진동 섹션
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), //안쪽 여백
-                          decoration: BoxDecoration(
-                            color: Colors.white, // 흰색 배경
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.3), //그림자 색 (회색, 투명도 30%)
-                                blurRadius: 6, //퍼짐 정도
-                                offset: const Offset(0, 3), //수직 방향 그림자 위치
-                              ),
-                            ],
-                          ),
-                          child: const Text(
-                            "진동",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xff8e8e8e), //텍스트 색
-                            ),
-                          ),
-                        ),
+                        _buildSectionTitle("진동"),
                         const SizedBox(height: 8),
-                        Column(
-                          children: [
-                            for (var sound in allDefaultSounds)
-                              if (alarmEnabled[sound["name"]] == true)
-                                _buildVibrationItem(
-                                  name: sound["name"],
-                                  color: sound["color"],
-                                  image: sound["image"],
-                                ),
-                            for (var sound in customSounds)
-                              if (alarmEnabled[sound["name"]] == true)
-                                _buildVibrationItem(
-                                  name: sound["name"],
-                                  color: sound["color"] == "RED"
-                                      ? Colors.red
-                                      : sound["color"] == "GREEN"
-                                      ? Colors.green
-                                      : Colors.blue,
-                                  emoji: sound["emoji"],
-                                ),
-                          ],
-                        ),
+
+                        //기본음 진동
+                        for (var entry in defaultSoundInfo.entries)
+                          if (alarmEnabled[entry.key] == true)
+                            _buildVibrationItem(
+                              name: entry.key,
+                              label: entry.value["label"],
+                              image: entry.value["image"],
+                              color: entry.value["color"],
+                            ),
+
+                        //커스텀 진동
+                        for (var sound in customSounds)
+                          if (alarmEnabled[sound["name"]] == true)
+                            _buildVibrationItem(
+                              name: sound["name"],
+                              emoji: sound["emoji"],
+                              color: _mapColor(sound["color"]),
+                            ),
                       ],
                     ),
                   ),
@@ -192,14 +330,13 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
           ),
         ],
       ),
-
-      //하단
       bottomNavigationBar: BottomNavigation(
         selectedTabIndex: _selectedTabIndex,
         onTabChanged: (index) {
           if (index == 0) {
             // 내소리 → MainPage로 이동 (내소리 탭 선택)
             Navigator.pushAndRemoveUntil(
+
               context,
               MaterialPageRoute(builder: (context) => const MainPage()),
               (route) => false,
@@ -212,22 +349,48 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
               MaterialPageRoute(builder: (context) => const MainPage()),
               (route) => false,
             );
-          } else if (index == 2) {
-            // 옵션(자기 자신) → 그냥 무시
           }
         },
       ),
     );
   }
 
+  //섹션 타이틀
+  Widget _buildSectionTitle(String title) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.3),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w700,
+          color: Color(0xff8e8e8e),
+        ),
+      ),
+    );
+  }
 
-  //알람
+  //알람 아이템
   Widget _buildAlarmItem({
     required String name,
-    required Color color,
+    String? label,
+    Color? color,
     String? image,
     String? emoji,
   }) {
+    final c = color ?? Colors.blue;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -236,34 +399,38 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
             width: 80,
             height: 62,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              border: Border.all(color: color, width: 1.5),
+              color: c.withOpacity(0.1),
+              border: Border.all(color: c, width: 1.5),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Center(
               child: image != null
                   ? Image.asset(image, width: 30, height: 30)
-                  : Text(emoji ?? "🔔", style: const TextStyle(fontSize: 24)),
+                  : (emoji != null && emoji.isNotEmpty
+                  ? Text(emoji, style: const TextStyle(fontSize: 24))
+                  : const Icon(Icons.music_note, size: 24)),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(name,
-                style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF3F3E3E))),
+            child: Text(
+              label ?? name,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF3F3E3E),
+              ),
+            ),
           ),
           Switch(
             value: alarmEnabled[name] ?? false,
-            activeColor: Color(0xFF6497FF), //동그라미 색
-            activeTrackColor: Color(0xFFD4E2FF), //켜졌을 때 배경 색
-            inactiveThumbColor: Color(0xFFFEFEFE), //꺼졌을 때 동그라미
-            inactiveTrackColor: Color(0xFFD9D9D9), //꺼졌을 때 배경
+            activeColor: const Color(0xFF6497FF),
+            activeTrackColor: const Color(0xFFD4E2FF),
             onChanged: (val) {
               setState(() {
                 alarmEnabled[name] = val;
               });
+              _updateAlarmSetting(name, val, vibrationLevels[name] ?? 1);
             },
           )
         ],
@@ -271,51 +438,80 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
     );
   }
 
-  //진동
+  //진동 아이템
   Widget _buildVibrationItem({
     required String name,
-    required Color color,
+    String? label,
+    Color? color,
     String? image,
     String? emoji,
   }) {
+    final c = color ?? Colors.blue;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          //기존 박스 그대로
           Container(
             width: 80,
             height: 62,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              border: Border.all(color: color, width: 1.5),
+              color: c.withOpacity(0.1),
+              border: Border.all(color: c, width: 1.5),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Center(
               child: image != null
                   ? Image.asset(image, width: 30, height: 30)
-                  : Text(emoji ?? "🔔", style: const TextStyle(fontSize: 24)),
+                  : (emoji != null && emoji.isNotEmpty
+                  ? Text(emoji, style: const TextStyle(fontSize: 24))
+                  : const Icon(Icons.vibration, size: 24)),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(name,
-                style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black)),
+            child: Text(
+              label ?? name,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
+            ),
           ),
-          DropdownButton<String>(
-            value: "진동 1",
-            items: const [
-              DropdownMenuItem(value: "진동 1", child: Text("진동 1")),
-              DropdownMenuItem(value: "진동 2", child: Text("진동 2")),
-              DropdownMenuItem(value: "진동 3", child: Text("진동 3")),
-            ],
-            onChanged: (val) {},
+          DropdownButton<int>(
+            value: vibrationLevels[name] ?? 1,
+            items: List.generate(
+              5,
+                  (i) => DropdownMenuItem(
+                value: i + 1,
+                child: Text("진동 ${i + 1}"),
+              ),
+            ),
+            onChanged: (val) {
+              if (val == null) return;
+              setState(() {
+                vibrationLevels[name] = val;
+              });
+              //진동 API 호출
+              _updateVibrationSetting(name, val);
+            },
           )
         ],
       ),
     );
+  }
+
+  //서버 색상 문자열을 Flutter Color로 매핑
+  Color _mapColor(String? colorStr) {
+    switch (colorStr?.toUpperCase()) {
+      case "RED":
+        return Colors.red;
+      case "GREEN":
+        return Colors.green;
+      case "BLUE":
+      default:
+        return Colors.blue;
+    }
   }
 }

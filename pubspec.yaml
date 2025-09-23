@@ -96,6 +96,9 @@ flutter:
     - assets/blue/
     - assets/green/
     - assets/red/
+    - assets/images/smile.png
+    - assets/images/knock.png
+    - assets/images/microwave.png
 
   # To add assets to your application, add an assets section, like this:
 
