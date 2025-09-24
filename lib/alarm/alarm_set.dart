@@ -63,20 +63,18 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
       "image": "assets/images/emergency.png",
       "color": Colors.red,
     },
-
-
   };
 
-  //커스텀 소리 리스트
+  // 커스텀 소리 리스트
   List<Map<String, dynamic>> customSounds = [];
 
-  //알람 상태 저장
+  // 알람 상태 저장
   Map<String, bool> alarmEnabled = {};
   Map<String, int> vibrationLevels = {};
   Map<String, int> soundIds = {};
   Map<String, String> soundKinds = {};
 
-  //하단 탭 상태
+  // 하단 탭 상태
   int _selectedTabIndex = 2;
 
   @override
@@ -85,7 +83,7 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
     _fetchAlarmSettings();
   }
 
-  //알람 설정 조회
+  // 알람 설정 조회
   Future<void> _fetchAlarmSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -139,7 +137,7 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
     }
   }
 
-  //알람 설정 업데이트
+  // 알람 설정 업데이트
   Future<void> _updateAlarmSetting(
       String soundName, bool enabled, int vibration) async {
     try {
@@ -158,10 +156,6 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
         "vibrationLevel": vibration,
       });
 
-      debugPrint("📡 알람 설정 API 호출");
-      debugPrint("➡️ URL: $url");
-      debugPrint("➡️ Body: $body");
-
       final response = await http.put(
         url,
         headers: {
@@ -171,9 +165,6 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
         body: body,
       );
 
-      debugPrint("⬅️ Response Code: ${response.statusCode}");
-      debugPrint("⬅️ Response Body: ${response.body}");
-
       if (response.statusCode != 200) {
         debugPrint("❌ 알람 설정 저장 실패: ${response.statusCode}");
       }
@@ -182,7 +173,7 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
     }
   }
 
-  //진동 설정 업데이트
+  // 진동 설정 업데이트
   Future<void> _updateVibrationSetting(String soundName, int vibrationType) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -196,12 +187,8 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
       final body = jsonEncode({
         "soundKind": soundKind,
         "soundId": soundId,
-        "vibrationType": vibrationType, //1~5
+        "vibrationType": vibrationType, // 1~5
       });
-
-      debugPrint("📡 진동 설정 API 호출");
-      debugPrint("➡️ URL: $url");
-      debugPrint("➡️ Body: $body");
 
       final response = await http.put(
         url,
@@ -211,9 +198,6 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
         },
         body: body,
       );
-
-      debugPrint("⬅️ Response Code: ${response.statusCode}");
-      debugPrint("⬅️ Response Body: ${response.body}");
 
       if (response.statusCode != 200) {
         debugPrint("❌ 진동 설정 저장 실패: ${response.statusCode}");
@@ -269,7 +253,7 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
                         _buildSectionTitle("알람"),
                         const SizedBox(height: 8),
 
-                        //기본음
+                        // 기본음
                         for (var entry in defaultSoundInfo.entries)
                           _buildAlarmItem(
                             name: entry.key,
@@ -278,7 +262,7 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
                             color: entry.value["color"],
                           ),
 
-                        //커스텀
+                        // 커스텀
                         for (var sound in customSounds)
                           _buildAlarmItem(
                             name: sound["name"],
@@ -290,7 +274,7 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
                         _buildSectionTitle("진동"),
                         const SizedBox(height: 8),
 
-                        //기본음 진동
+                        // 기본음 진동
                         for (var entry in defaultSoundInfo.entries)
                           if (alarmEnabled[entry.key] == true)
                             _buildVibrationItem(
@@ -300,7 +284,7 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
                               color: entry.value["color"],
                             ),
 
-                        //커스텀 진동
+                        // 커스텀 진동
                         for (var sound in customSounds)
                           if (alarmEnabled[sound["name"]] == true)
                             _buildVibrationItem(
@@ -309,7 +293,7 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
                               color: _mapColor(sound["color"]),
                             ),
 
-                        const SizedBox(height: 40,)
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
@@ -319,11 +303,32 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
           ),
         ],
       ),
-
+      bottomNavigationBar: BottomNavigation(
+        selectedTabIndex: _selectedTabIndex,
+        onTabChanged: (index) {
+          setState(() => _selectedTabIndex = index);
+          if (index == 0) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const BasicScreen()),
+            );
+          } else if (index == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const MainPage()),
+            );
+          } else if (index == 2) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const AlarmSetScreen()),
+            );
+          }
+        },
+      ),
     );
   }
 
-  //섹션 타이틀
+  // 섹션 타이틀
   Widget _buildSectionTitle(String title) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -349,7 +354,7 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
     );
   }
 
-  //알람 아이템
+  // 알람 아이템
   Widget _buildAlarmItem({
     required String name,
     String? label,
@@ -406,7 +411,7 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
     );
   }
 
-  //진동 아이템
+  // 진동 아이템
   Widget _buildVibrationItem({
     required String name,
     String? label,
@@ -461,7 +466,6 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
               setState(() {
                 vibrationLevels[name] = val;
               });
-              //진동 API 호출
               _updateVibrationSetting(name, val);
             },
           )
@@ -470,7 +474,7 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
     );
   }
 
-  //서버 색상 문자열을 Flutter Color로 매핑
+  // 서버 색상 문자열을 Flutter Color로 매핑
   Color _mapColor(String? colorStr) {
     switch (colorStr?.toUpperCase()) {
       case "RED":

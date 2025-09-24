@@ -209,7 +209,7 @@ class _BasicScreenState extends State<BasicScreen> {
 
                         // 커스텀 리스트
                         SizedBox(
-                          height: 150,
+                          height: 240,
                           child: GridView.count(
                             crossAxisCount: 3,
                             mainAxisSpacing: 28,
@@ -242,6 +242,7 @@ class _BasicScreenState extends State<BasicScreen> {
           ),
         ],
       ),
+
       bottomNavigationBar: BottomNavigation(
         selectedTabIndex: 0,
         onTabChanged: (index) {
@@ -342,6 +343,7 @@ class CustomSoundBox extends StatelessWidget {
     );
   }
 }
+
 
 //소리 추가 버튼
 class AddSoundBox extends StatelessWidget {
