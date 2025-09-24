@@ -22,31 +22,31 @@ class VibrationService {
         return;
       }
       
-      // 진동 레벨별 세기 (vibration 패키지 사용 - 7초간 지속 진동)
+      // 진동 레벨별 세기 (vibration 패키지 사용 - 5초간 지속 진동)
       switch (clampedLevel) {
         case 0:
           // 진동 없음
           print('📳 진동 없음');
           break;
         case 1:
-          // 약한 진동 (200ms, amplitude 50) - 7초간 반복
-          await _vibrateForDuration(200, 50, const Duration(seconds: 7), const Duration(milliseconds: 800));
+          // 약한 진동 (200ms, amplitude 50) - 5초간 반복
+          await _vibrateForDuration(200, 50, const Duration(seconds: 5), const Duration(milliseconds: 800));
           break;
         case 2:
-          // 보통 진동 (300ms, amplitude 100) - 7초간 반복
-          await _vibrateForDuration(300, 100, const Duration(seconds: 7), const Duration(milliseconds: 600));
+          // 보통 진동 (300ms, amplitude 100) - 5초간 반복
+          await _vibrateForDuration(300, 100, const Duration(seconds: 5), const Duration(milliseconds: 600));
           break;
         case 3:
-          // 강한 진동 (400ms, amplitude 150) - 7초간 반복
-          await _vibrateForDuration(400, 150, const Duration(seconds: 7), const Duration(milliseconds: 500));
+          // 강한 진동 (400ms, amplitude 150) - 5초간 반복
+          await _vibrateForDuration(400, 150, const Duration(seconds: 5), const Duration(milliseconds: 500));
           break;
         case 4:
-          // 매우 강한 진동 (500ms, amplitude 200) - 7초간 반복
-          await _vibrateForDuration(500, 200, const Duration(seconds: 7), const Duration(milliseconds: 400));
+          // 매우 강한 진동 (500ms, amplitude 200) - 5초간 반복
+          await _vibrateForDuration(500, 200, const Duration(seconds: 5), const Duration(milliseconds: 400));
           break;
         case 5:
-          // 극강 진동 (600ms, amplitude 255) - 7초간 반복
-          await _vibrateForDuration(600, 255, const Duration(seconds: 7), const Duration(milliseconds: 300));
+          // 극강 진동 (600ms, amplitude 255) - 5초간 반복
+          await _vibrateForDuration(600, 255, const Duration(seconds: 5), const Duration(milliseconds: 300));
           break;
         default:
           // 기본값: 보통 진동
@@ -63,7 +63,7 @@ class VibrationService {
   /// 지정된 시간 동안 주기적으로 진동 실행 (vibration 패키지 사용)
   /// [duration] 진동 지속 시간 (밀리초)
   /// [amplitude] 진동 강도 (0-255, 255가 최대)
-  /// [totalDuration] 총 진동 지속 시간 (7초)
+  /// [totalDuration] 총 진동 지속 시간 (5초)
   /// [interval] 진동 간격
   Future<void> _vibrateForDuration(int duration, int amplitude, Duration totalDuration, Duration interval) async {
     final startTime = DateTime.now();
