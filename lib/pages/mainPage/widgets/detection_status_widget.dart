@@ -85,19 +85,6 @@ class _DetectionStatusWidgetState extends State<DetectionStatusWidget>
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // 데시벨 표시 (파란색으로 고정)
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.blue,
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: Text(
-            '${widget.currentDb.toStringAsFixed(1)} dB',
-            style: const TextStyle(color: Colors.white, fontSize: 16),
-          ),
-        ),
-        const SizedBox(height: 20),
         // 상태 표시 (파란색으로 고정)
         Container(
           padding: const EdgeInsets.all(12),

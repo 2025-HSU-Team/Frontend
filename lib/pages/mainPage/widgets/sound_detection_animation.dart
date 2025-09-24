@@ -30,6 +30,10 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Color _detectionColor; // 인식중일 때 사용할 고정 색상
+  
+  // 데시벨에 따른 부드러운 크기 전환을 위한 변수들
+  double _currentMaxDiameter = 302.0; // 현재 최대 지름
+  double _targetMaxDiameter = 302.0;  // 목표 최대 지름
 
   @override
   void initState() {
@@ -40,6 +44,9 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
     );
     _controller.repeat();
     _detectionColor = _getRandomColor(); // 초기 랜덤 색상 설정
+    
+    // 초기 목표 지름 설정
+    _updateTargetDiameter();
   }
 
   @override
@@ -52,6 +59,38 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
         _detectionColor = _getRandomColor(); // 인식 시작 시 새로운 랜덤 색상
       }
     }
+    
+    // 데시벨이 변경되면 목표 크기를 업데이트하고 부드럽게 전환
+    if (widget.currentDb != oldWidget.currentDb) {
+      _updateTargetDiameter();
+    }
+  }
+  
+  // 데시벨에 따른 목표 지름 계산 및 부드러운 전환
+  void _updateTargetDiameter() {
+    final dbRange = 160.0; // -160dB에서 0dB까지
+    final normalizedDb = (widget.currentDb + dbRange) / dbRange; // 0.0 ~ 1.0
+    _targetMaxDiameter = 302 - (normalizedDb * 146); // 302 ~ 156 픽셀
+    
+    // 부드러운 전환을 위한 애니메이션
+    _animateToTargetDiameter();
+  }
+  
+  // 목표 지름으로 부드럽게 전환
+  void _animateToTargetDiameter() {
+    final animation = Tween<double>(
+      begin: _currentMaxDiameter,
+      end: _targetMaxDiameter,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    ));
+    
+    animation.addListener(() {
+      setState(() {
+        _currentMaxDiameter = animation.value;
+      });
+    });
   }
 
   @override
@@ -97,10 +136,8 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
   }
 
   Widget _buildPulseRing(double progress) {
-    // 데시벨에 따라 최대 크기 조절 (-160dB ~ 0dB 범위를 156 ~ 302 픽셀로 매핑)
-    final dbRange = 160.0; // -160dB에서 0dB까지
-    final normalizedDb = (widget.currentDb + dbRange) / dbRange; // 0.0 ~ 1.0
-    final maxDiameter = 156 + (normalizedDb * 146); // 156 ~ 302 픽셀
+    // 부드럽게 전환되는 현재 최대 크기 사용
+    final maxDiameter = _currentMaxDiameter;
     
     // 중앙 원(156px)에서 시작해서 최대 크기까지 퍼져 나가는 방식
     final startDiameter = 156.0;

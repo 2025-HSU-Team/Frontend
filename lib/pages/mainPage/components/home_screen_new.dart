@@ -41,12 +41,27 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isAnalyzing = false; // 분석 중 플래그 (중복 통신 방지)
   String? _detectedEmoji; // 감지된 커스텀 소리의 이모지
   String? _detectedSoundColor; // 감지된 커스텀 소리의 색상
+  String _currentTmi = ''; // 현재 표시할 TMI
 
   // 상수
   static const int _detectionCooldown = 5;
   static const double _normalThreshold = -50;   // 대기 상태 (매우 조용)
   static const double _warningThreshold = -30;  // 소리 탐지 시작 (일반 대화 수준)
   static const double _dangerThreshold = -10;   // 위험 상태 (시끄러움)
+
+  // TMI 리스트
+  final List<String> _tmiList = [
+    '파란색이면 생물 소리입니다! 주변을 확인해 보세요!',
+    '초록색이면 생활 소리입니다! 상황을 살펴보세요!',
+    '빨간색이면 긴급 상황입니다! 조심하세요!',
+    '소리가 가까울수록 원이 커져요!',
+    '커스텀 소리를 등록하면 나만의 소리 탐지를 할 수 있어요!',
+    '진동 패턴으로 소리를 구분할 수 있어요!',
+    '한눈에 보기 쉽도록 소리별 이모지가 표시돼요!',
+    '일상생활 소리 탐지는 필요에 따라 ON/OFF 할 수 있어요!',
+    '탐지되는 소리별로 다른 진동 패턴을 설정해보세요!',
+    '커스텀 소리를 생활 패턴에 맞게 등록하세요!',
+  ];
 
   // 랜덤 색상 생성
   Color _getRandomColor() {
@@ -56,6 +71,11 @@ class _HomeScreenState extends State<HomeScreen> {
       const Color(0xFFD4E2FF), // 파란색
     ];
     return colors[math.Random().nextInt(colors.length)];
+  }
+
+  // 랜덤 TMI 선택
+  String _getRandomTmi() {
+    return _tmiList[math.Random().nextInt(_tmiList.length)];
   }
 
   // 상단 아이콘 경로 결정 (Icon.png로 고정)
@@ -69,6 +89,10 @@ class _HomeScreenState extends State<HomeScreen> {
     // 앱 시작 시 랜덤 색상 설정
     _detectionColor = _getRandomColor();
     print('🚀 앱 시작 - 초기 랜덤 색상 설정: ${_detectionColor!.value.toRadixString(16)}');
+    
+    // 초기 TMI 설정
+    _currentTmi = _getRandomTmi();
+    
     _initializeServices();
   }
 
@@ -208,6 +232,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _detectionColor = _getRandomColor();
     print('🎨 탐지 시작 - 새로운 랜덤 색상 생성: ${_detectionColor!.value.toRadixString(16)}');
     
+    // 소리 인식 시작 시 TMI도 새로 설정
+    _currentTmi = _getRandomTmi();
+    print('💡 소리 인식 시작 - 새로운 TMI 설정: $_currentTmi');
+    
     setState(() {
       _isDetecting = true;
       _currentState = DetectionState.detecting;
@@ -331,67 +359,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     // 컨트롤 버튼들 (현재 비어있음)
                     const ControlButtonsWidget(),
                     
-                    // 결과 표시 (Unknown이 아닌 경우에만)
-                    if (_showResult && _detectedSoundName != null && _detectedSoundName != 'Unknown' && _detectedSoundName != '알 수 없음') ...[
-                      const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.green[50],
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.green),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.check_circle, color: Colors.green),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    '인식된 소리: $_detectedSoundName',
-                                    style: const TextStyle(
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  if (_lastDetectionResult != null) ...[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '알림: ${_lastDetectionResult!['alarmEnabled'] == true ? '활성화' : '비활성화'}',
-                                      style: const TextStyle(
-                                        color: Colors.blue,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    if (_lastDetectionResult!['alarmEnabled'] == true) ...[
-                                      Text(
-                                        '진동: 진동 ${_lastDetectionResult!['vibration'] ?? 1}',
-                                        style: const TextStyle(
-                                          color: Colors.orange,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
                     
                     const SizedBox(height: 30),
                     
                     // TMI 텍스트
-                    const Text(
-                      'tmi: 빨간색은 무슨 의미에요~',
-                      style: TextStyle(
+                    Text(
+                      'tmi: $_currentTmi',
+                      style: const TextStyle(
                         fontSize: 14,
                         color: Colors.grey,
                       ),

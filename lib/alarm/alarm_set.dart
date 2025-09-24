@@ -336,7 +336,6 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
           if (index == 0) {
             // 내소리 → MainPage로 이동 (내소리 탭 선택)
             Navigator.pushAndRemoveUntil(
-
               context,
               MaterialPageRoute(builder: (context) => const MainPage()),
               (route) => false,

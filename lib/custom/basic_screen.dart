@@ -242,6 +242,27 @@ class _BasicScreenState extends State<BasicScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: BottomNavigation(
+        selectedTabIndex: 0,
+        onTabChanged: (index) {
+          if (index == 0) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const BasicScreen()),
+            );
+          } else if (index == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const MainPage()),
+            );
+          } else if (index == 2) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const AlarmSetScreen()),
+            );
+          }
+        },
+      ),
     );
   }
 }
