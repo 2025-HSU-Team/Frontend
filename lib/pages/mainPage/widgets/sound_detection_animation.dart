@@ -26,27 +26,13 @@ class SoundDetectionAnimation extends StatefulWidget {
   State<SoundDetectionAnimation> createState() => _SoundDetectionAnimationState();
 }
 
-class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+class _SoundDetectionAnimationState extends State<SoundDetectionAnimation> {
   late Color _detectionColor; // 인식중일 때 사용할 고정 색상
-  
-  // 데시벨에 따른 부드러운 크기 전환을 위한 변수들
-  double _currentMaxDiameter = 302.0; // 현재 최대 지름
-  double _targetMaxDiameter = 302.0;  // 목표 최대 지름
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    );
-    _controller.repeat();
     _detectionColor = _getRandomColor(); // 초기 랜덤 색상 설정
-    
-    // 초기 목표 지름 설정
-    _updateTargetDiameter();
   }
 
   @override
@@ -59,43 +45,10 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
         _detectionColor = _getRandomColor(); // 인식 시작 시 새로운 랜덤 색상
       }
     }
-    
-    // 데시벨이 변경되면 목표 크기를 업데이트하고 부드럽게 전환
-    if (widget.currentDb != oldWidget.currentDb) {
-      _updateTargetDiameter();
-    }
-  }
-  
-  // 데시벨에 따른 목표 지름 계산 및 부드러운 전환
-  void _updateTargetDiameter() {
-    final dbRange = 160.0; // -160dB에서 0dB까지
-    final normalizedDb = (widget.currentDb + dbRange) / dbRange; // 0.0 ~ 1.0
-    _targetMaxDiameter = 302 - (normalizedDb * 146); // 302 ~ 156 픽셀
-    
-    // 부드러운 전환을 위한 애니메이션
-    _animateToTargetDiameter();
-  }
-  
-  // 목표 지름으로 부드럽게 전환
-  void _animateToTargetDiameter() {
-    final animation = Tween<double>(
-      begin: _currentMaxDiameter,
-      end: _targetMaxDiameter,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    ));
-    
-    animation.addListener(() {
-      setState(() {
-        _currentMaxDiameter = animation.value;
-      });
-    });
   }
 
   @override
   void dispose() {
-    _controller.dispose();
     super.dispose();
   }
 
@@ -103,68 +56,72 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
   Widget build(BuildContext context) {
     return ClipRect(
       child: SizedBox(
-        width: 302,  // 최대 애니메이션 크기로 제한
-        height: 302, // 최대 애니메이션 크기로 제한
-        child: Stack(
-          alignment: Alignment.center,
+        width: 450,  // 최대 애니메이션 크기 추가 확장
+        height: 450, // 최대 애니메이션 크기 추가 확장
+      child: Stack(
+        alignment: Alignment.center,
           clipBehavior: Clip.none,
-          children: [
-            // 펄스 링들
-            AnimatedBuilder(
-              animation: _controller,
-              builder: (_, __) {
-                final t = _controller.value;
-                return Stack(
-                  alignment: Alignment.center,
-                  clipBehavior: Clip.none,
-                  children: [
-                    _buildPulseRing((t + 0.0) % 1.0),
-                    _buildPulseRing((t + 0.33) % 1.0),
-                    _buildPulseRing((t + 0.66) % 1.0),
-                  ],
-                );
-              },
-            ),
-            // 중앙 원
-            _buildCenterCircle(),
-            // 중앙 아이콘 (귀와 눈)
-            _buildCenterIcon(),
-          ],
+        children: [
+            // 데시벨에 따른 원들
+            _buildDecibelCircles(),
+          // 중앙 원
+          _buildCenterCircle(),
+          // 중앙 아이콘 (귀와 눈)
+          _buildCenterIcon(),
+        ],
         ),
       ),
     );
   }
 
-  Widget _buildPulseRing(double progress) {
-    // 부드럽게 전환되는 현재 최대 크기 사용
-    final maxDiameter = _currentMaxDiameter;
-    
-    // 중앙 원(156px)에서 시작해서 최대 크기까지 퍼져 나가는 방식
-    final startDiameter = 156.0;
-    final diameter = startDiameter + (maxDiameter - startDiameter) * progress;
-    
-    // 펄스 링은 점점 옅어지는 효과 (초록색 40%부터, 빨간색/파란색 100%부터)
+  // 데시벨에 따른 원들 생성
+  Widget _buildDecibelCircles() {
     final soundColor = _getSoundColor();
-    final isGreen = soundColor.value == const Color(0xFF9FFF55).value;
-    final startOpacity = isGreen ? 0.4 : 1.0;
-    final opacity = (startOpacity * (1.0 - progress * progress)).clamp(0.0, 1.0);
+    final circles = <Widget>[];
     
-    return Container(
-      width: diameter,
-      height: diameter,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: soundColor.withOpacity(opacity),
-          width: 6,
+    // 데시벨 범위를 7개 구간으로 나누기 (-40dB ~ 0dB)
+    // 조용한 도서관 기준(-40dB)을 1개 원으로, 0dB 이상을 7개 원으로 설정
+    final minDb = -40.0; // 조용한 도서관 기준
+    final maxDb = 0.0;   // 최대 데시벨
+    final dbRange = maxDb - minDb; // 40dB 범위
+    final normalizedDb = ((widget.currentDb - minDb) / dbRange).clamp(0.0, 1.0); // 0.0 ~ 1.0
+    final activeCircles = (normalizedDb * 6 + 1).ceil().clamp(1, 7); // 1개~7개 원
+    
+    // 중앙 원 크기 (180px로 확장)
+    final centerSize = 180.0;
+    
+    // 7개의 원 생성 (가장 안쪽부터)
+    for (int i = 0; i < 7; i++) {
+      final isActive = i < activeCircles;
+      final circleSize = centerSize + (i + 1) * 25; // 각 원은 25px씩 커짐 (30px → 25px)
+      
+      // 안쪽부터 바깥쪽으로 갈수록 투명도가 점점 감소 (0.9 → 0.3)
+      final opacity = isActive ? (0.9 - (i * 0.1)).clamp(0.3, 0.9) : 0.0;
+      
+      circles.add(
+        Container(
+          width: circleSize,
+          height: circleSize,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+              color: soundColor.withOpacity(opacity),
+              width: 2,
+          ),
         ),
       ),
+      );
+    }
+    
+    return Stack(
+      alignment: Alignment.center,
+      children: circles,
     );
   }
 
   Widget _buildCenterCircle() {
-    // 중앙 원 크기를 156x156으로 고정
-    final centerSize = 156.0;
+    // 중앙 원 크기를 180x180으로 확장
+    final centerSize = 180.0;
     
     // 중앙 원은 고정 색상 (초록색 40%, 빨간색/파란색 100%)
     final soundColor = _getSoundColor();
@@ -190,7 +147,7 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
     
     // 이모지 모드인 경우
     if (iconPath == 'EMOJI_MODE') {
-      return Container(
+    return Container(
         width: 120,
         height: 120,
         child: Center(
