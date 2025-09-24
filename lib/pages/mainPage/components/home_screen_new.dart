@@ -55,10 +55,10 @@ class _HomeScreenState extends State<HomeScreen> {
     '초록색이면 생활 소리입니다! 상황을 살펴보세요!',
     '빨간색이면 긴급 상황입니다! 조심하세요!',
     '소리가 가까울수록 원이 커져요!',
-    '커스텀 소리를 등록하면 나만의 소리 탐지를 할 수 있어요!',
+    //'커스텀 소리를 등록하면 나만의 소리 탐지를 할 수 있어요!',
     '진동 패턴으로 소리를 구분할 수 있어요!',
     '한눈에 보기 쉽도록 소리별 이모지가 표시돼요!',
-    '일상생활 소리 탐지는 필요에 따라 ON/OFF 할 수 있어요!',
+    //'일상생활 소리 탐지는 필요에 따라 ON/OFF 할 수 있어요!',
     '탐지되는 소리별로 다른 진동 패턴을 설정해보세요!',
     '커스텀 소리를 생활 패턴에 맞게 등록하세요!',
   ];
@@ -162,10 +162,10 @@ class _HomeScreenState extends State<HomeScreen> {
       VibrationService().vibrate(vibrationLevel);
     }
     
-    // Unknown이 아닌 경우에만 7초 후 결과 숨김
+    // Unknown이 아닌 경우에만 5초 후 결과 숨김
     if (_showResult) {
       _resultTimer?.cancel();
-      _resultTimer = Timer(const Duration(seconds: 7), () {
+      _resultTimer = Timer(const Duration(seconds: 5), () {
         if (mounted) {
           print('⏰ 결과 표시 완료 - 새로운 랜덤 색상 선택');
           setState(() {
@@ -173,7 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _detectedSoundName = null; // 결과 초기화
             _detectedEmoji = null; // 이모지 초기화
             _detectedSoundColor = null; // 색상 초기화
-            // 7초 후 새로운 랜덤 색상 선택
+            // 5초 후 새로운 랜덤 색상 선택
             _detectionColor = _getRandomColor();
             print('🎨 새로운 랜덤 색상 선택: ${_detectionColor!.value.toRadixString(16)}');
           });
@@ -324,13 +324,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                    // 상단 아이콘
+                    // 상단 아이콘 (80x80)
                     Container(
-                      margin: const EdgeInsets.only(bottom: 30),
+                      margin: const EdgeInsets.only(bottom: 34), // 중앙 원과의 간격 34px
                       child: Image.asset(
                         _getTopIconPath(),
-                        width: 60,
-                        height: 60,
+                        width: 80,
+                        height: 80,
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -345,7 +345,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       emoji: _detectedEmoji, // 커스텀 소리 이모지 전달
                       soundColor: _detectedSoundColor, // 커스텀 소리 색상 전달
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 0), // 중앙 원과 인식중... 컴포넌트 사이 간격 30px
                     
                     // 상태 표시
                     DetectionStatusWidget(
@@ -356,13 +356,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       detectedSoundName: _detectedSoundName, // 감지된 소리명
                       detectedEmoji: _detectedEmoji, // 감지된 커스텀 소리의 이모지
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 1), // 인식중... 컴포넌트와 TMI 컴포넌트 사이 간격 19px
                     
                     // 컨트롤 버튼들 (현재 비어있음)
                     const ControlButtonsWidget(),
                     
                     
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 35), // TMI 텍스트를 5px 아래로 이동
                     
                     // TMI 텍스트
                     Text(

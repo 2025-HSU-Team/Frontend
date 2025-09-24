@@ -36,25 +36,38 @@ class _DetectionStatusWidgetState extends State<DetectionStatusWidget>
       vsync: this,
       duration: const Duration(seconds: 5), // 전체 사이클 5초
     );
+    
+    // 초기 애니메이션 시작 (백엔드 통신이 성공하지 않은 경우)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final hasSuccessfulDetection = widget.detectedSoundName != null && 
+          widget.detectedSoundName != "Unknown" && 
+          widget.detectedSoundName != "알 수 없음";
+      
+      if (!hasSuccessfulDetection) {
+        _startDetectionAnimation();
+      }
+    });
   }
 
   @override
   void didUpdateWidget(DetectionStatusWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
     
-    if (widget.isDetecting && !oldWidget.isDetecting) {
-      _startDetectionAnimation();
-    } else if (!widget.isDetecting && oldWidget.isDetecting) {
-      _stopDetectionAnimation();
-    }
+    // 백엔드 통신이 성공한 경우를 제외하고는 항상 애니메이션 동작
+    final hasSuccessfulDetection = widget.detectedSoundName != null && 
+        widget.detectedSoundName != "Unknown" && 
+        widget.detectedSoundName != "알 수 없음";
     
-    // 감지된 소리 정보가 변경되었을 때 텍스트 업데이트
-    if (widget.detectedSoundName != oldWidget.detectedSoundName ||
-        widget.detectedEmoji != oldWidget.detectedEmoji) {
-      if (!widget.isDetecting) {
-        setState(() {
-          _detectionText = _getStatusText();
-        });
+    if (hasSuccessfulDetection) {
+      // 백엔드 통신 성공 시 애니메이션 중지
+      _stopDetectionAnimation();
+      setState(() {
+        _detectionText = _getStatusText();
+      });
+    } else {
+      // 백엔드 통신이 성공하지 않은 경우 애니메이션 시작
+      if (!_textController.isAnimating) {
+        _startDetectionAnimation();
       }
     }
   }
@@ -96,8 +109,18 @@ class _DetectionStatusWidgetState extends State<DetectionStatusWidget>
       return _getKoreanSoundName(widget.detectedSoundName!);
     }
     
-    // 그 외의 경우 기본 대기 상태
-    return '자동 탐지 대기 중';
+    // 그 외의 경우 애니메이션이 동작하는 텍스트 반환
+    return _detectionText;
+  }
+  
+  // 좌측 정렬을 사용할지 결정하는 메서드
+  bool _shouldUseLeftAlign() {
+    // 백엔드 통신이 성공하지 않은 경우 (인식중 애니메이션 상태) 좌측 정렬 사용
+    final hasSuccessfulDetection = widget.detectedSoundName != null && 
+        widget.detectedSoundName != "Unknown" && 
+        widget.detectedSoundName != "알 수 없음";
+    
+    return !hasSuccessfulDetection;
   }
   
   // 영어 소리명을 한글 소리명으로 변환
@@ -168,7 +191,8 @@ class _DetectionStatusWidgetState extends State<DetectionStatusWidget>
       children: [
         // 상태 표시 (파란색으로 고정)
         Container(
-          padding: const EdgeInsets.all(12),
+          constraints: const BoxConstraints(maxWidth: 230), // 최대 너비 제한
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), 
           decoration: BoxDecoration(
             color: Colors.blue[50],
             borderRadius: BorderRadius.circular(20),
@@ -185,17 +209,18 @@ class _DetectionStatusWidgetState extends State<DetectionStatusWidget>
                 height: 20,
                 color: Colors.blue,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: _shouldUseLeftAlign() ? 60 : 0), // 조건부 간격: 인식중일 때 55px, 통신 성공 시 0px
               Expanded(
                 child: Text(
                   _detectionText,
-                  textAlign: TextAlign.center, // 텍스트 중앙 정렬
+                  textAlign: _shouldUseLeftAlign() ? TextAlign.left : TextAlign.center, // 조건부 정렬
                   style: const TextStyle(
                     color: Colors.blue,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
               ),
+              const SizedBox(width: 16), // 오른쪽에도 동일한 간격 추가
             ],
           ),
         ),

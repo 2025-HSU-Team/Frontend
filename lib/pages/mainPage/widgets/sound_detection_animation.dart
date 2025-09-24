@@ -56,19 +56,19 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation> {
   Widget build(BuildContext context) {
     return ClipRect(
       child: SizedBox(
-        width: 450,  // 최대 애니메이션 크기 추가 확장
-        height: 450, // 최대 애니메이션 크기 추가 확장
-      child: Stack(
-        alignment: Alignment.center,
+        width: 380,  // 중앙 원 156px + 주변 원들을 위한 영역 확장
+        height: 380, // 중앙 원 156px + 주변 원들을 위한 영역 확장
+        child: Stack(
+          alignment: Alignment.center,
           clipBehavior: Clip.none,
-        children: [
+          children: [
             // 데시벨에 따른 원들
             _buildDecibelCircles(),
-          // 중앙 원
-          _buildCenterCircle(),
-          // 중앙 아이콘 (귀와 눈)
-          _buildCenterIcon(),
-        ],
+            // 중앙 원
+            _buildCenterCircle(),
+            // 중앙 아이콘 (귀와 눈)
+            _buildCenterIcon(),
+          ],
         ),
       ),
     );
@@ -87,8 +87,8 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation> {
     final normalizedDb = ((widget.currentDb - minDb) / dbRange).clamp(0.0, 1.0); // 0.0 ~ 1.0
     final activeCircles = (normalizedDb * 6 + 1).ceil().clamp(1, 7); // 1개~7개 원
     
-    // 중앙 원 크기 (180px로 확장)
-    final centerSize = 180.0;
+    // 중앙 원 크기 (156px로 설정)
+    final centerSize = 156.0;
     
     // 7개의 원 생성 (가장 안쪽부터)
     for (int i = 0; i < 7; i++) {
@@ -120,8 +120,8 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation> {
   }
 
   Widget _buildCenterCircle() {
-    // 중앙 원 크기를 180x180으로 확장
-    final centerSize = 180.0;
+    // 중앙 원 크기를 156px로 설정
+    final centerSize = 156.0;
     
     // 중앙 원은 고정 색상 (초록색 40%, 빨간색/파란색 100%)
     final soundColor = _getSoundColor();
