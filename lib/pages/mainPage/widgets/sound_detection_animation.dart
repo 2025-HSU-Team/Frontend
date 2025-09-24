@@ -8,6 +8,8 @@ class SoundDetectionAnimation extends StatefulWidget {
   final bool isDetecting;
   final String? soundName; // 새로 추가된 파라미터
   final Color? detectionColor; // 인식중일 때 사용할 랜덤 색상
+  final String? emoji; // 커스텀 소리의 이모지
+  final String? soundColor; // 커스텀 소리의 색상 (RED, GREEN, BLUE)
 
   const SoundDetectionAnimation({
     super.key,
@@ -16,6 +18,8 @@ class SoundDetectionAnimation extends StatefulWidget {
     required this.isDetecting,
     this.soundName, // 옵셔널 파라미터
     this.detectionColor, // 옵셔널 파라미터
+    this.emoji, // 옵셔널 파라미터
+    this.soundColor, // 옵셔널 파라미터
   });
 
   @override
@@ -26,6 +30,10 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Color _detectionColor; // 인식중일 때 사용할 고정 색상
+  
+  // 데시벨에 따른 부드러운 크기 전환을 위한 변수들
+  double _currentMaxDiameter = 302.0; // 현재 최대 지름
+  double _targetMaxDiameter = 302.0;  // 목표 최대 지름
 
   @override
   void initState() {
@@ -36,6 +44,9 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
     );
     _controller.repeat();
     _detectionColor = _getRandomColor(); // 초기 랜덤 색상 설정
+    
+    // 초기 목표 지름 설정
+    _updateTargetDiameter();
   }
 
   @override
@@ -48,6 +59,38 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
         _detectionColor = _getRandomColor(); // 인식 시작 시 새로운 랜덤 색상
       }
     }
+    
+    // 데시벨이 변경되면 목표 크기를 업데이트하고 부드럽게 전환
+    if (widget.currentDb != oldWidget.currentDb) {
+      _updateTargetDiameter();
+    }
+  }
+  
+  // 데시벨에 따른 목표 지름 계산 및 부드러운 전환
+  void _updateTargetDiameter() {
+    final dbRange = 160.0; // -160dB에서 0dB까지
+    final normalizedDb = (widget.currentDb + dbRange) / dbRange; // 0.0 ~ 1.0
+    _targetMaxDiameter = 302 - (normalizedDb * 146); // 302 ~ 156 픽셀
+    
+    // 부드러운 전환을 위한 애니메이션
+    _animateToTargetDiameter();
+  }
+  
+  // 목표 지름으로 부드럽게 전환
+  void _animateToTargetDiameter() {
+    final animation = Tween<double>(
+      begin: _currentMaxDiameter,
+      end: _targetMaxDiameter,
+    ).animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    ));
+    
+    animation.addListener(() {
+      setState(() {
+        _currentMaxDiameter = animation.value;
+      });
+    });
   }
 
   @override
@@ -93,10 +136,8 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
   }
 
   Widget _buildPulseRing(double progress) {
-    // 데시벨에 따라 최대 크기 조절 (-160dB ~ 0dB 범위를 156 ~ 302 픽셀로 매핑)
-    final dbRange = 160.0; // -160dB에서 0dB까지
-    final normalizedDb = (widget.currentDb + dbRange) / dbRange; // 0.0 ~ 1.0
-    final maxDiameter = 156 + (normalizedDb * 146); // 156 ~ 302 픽셀
+    // 부드럽게 전환되는 현재 최대 크기 사용
+    final maxDiameter = _currentMaxDiameter;
     
     // 중앙 원(156px)에서 시작해서 최대 크기까지 퍼져 나가는 방식
     final startDiameter = 156.0;
@@ -145,11 +186,28 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
   }
 
   Widget _buildCenterIcon() {
+    final iconPath = _getStateIcon();
+    
+    // 이모지 모드인 경우
+    if (iconPath == 'EMOJI_MODE') {
+      return Container(
+        width: 120,
+        height: 120,
+        child: Center(
+          child: Text(
+            widget.emoji ?? '',
+            style: const TextStyle(fontSize: 60),
+          ),
+        ),
+      );
+    }
+    
+    // 일반 아이콘 모드
     return Container(
       width: 120,  // 156의 약 77% 크기로 조정
       height: 120, // 156의 약 77% 크기로 조정
       child: Image.asset(
-        _getStateIcon(),
+        iconPath,
         width: 120,
         height: 120,
         fit: BoxFit.contain,
@@ -158,9 +216,19 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
   }
 
   String _getStateIcon() {
+    // 이모지가 있는 경우 (커스텀 소리) - 가장 우선순위로 특별한 플래그 반환
+    if (widget.emoji != null && widget.emoji!.isNotEmpty) {
+      return 'EMOJI_MODE';
+    }
+    
     // soundName이 있고 "Unknown"이 아닌 경우에만 특정 아이콘 사용 (탐지 성공)
     if (widget.soundName != null && widget.soundName != "Unknown" && widget.soundName != "알 수 없음") {
-      return _getSoundNameIcon(widget.soundName!);
+      final iconPath = _getSoundNameIcon(widget.soundName!);
+      // _getSoundNameIcon이 기본 아이콘을 반환했다면 (커스텀 소리), 랜덤 아이콘 사용
+      if (iconPath == 'assets/icon_blue.png' && widget.detectionColor != null) {
+        return _getColorMatchingIcon(widget.detectionColor!);
+      }
+      return iconPath;
     }
     
     // 그 외의 경우 (앱 시작, 탐지 시작, 탐지 실패)에는 랜덤 색상과 매칭되는 아이콘 사용
@@ -193,7 +261,25 @@ class _SoundDetectionAnimationState extends State<SoundDetectionAnimation>
     return colors[math.Random().nextInt(colors.length)];
   }
 
+  // 서버에서 받은 색상 문자열을 Flutter Color로 매핑
+  Color _mapServerColor(String colorStr) {
+    switch (colorStr.toUpperCase()) {
+      case "RED":
+        return const Color(0xFFFFD7D4); // 빨간색
+      case "GREEN":
+        return const Color(0xFF9FFF55); // 초록색
+      case "BLUE":
+      default:
+        return const Color(0xFFD4E2FF); // 파란색
+    }
+  }
+
   Color _getSoundColor() {
+    // 이모지가 있는 경우 (커스텀 소리) - 서버에서 받은 색상 사용
+    if (widget.emoji != null && widget.emoji!.isNotEmpty && widget.soundColor != null) {
+      return _mapServerColor(widget.soundColor!);
+    }
+    
     // soundName이 있고 "Unknown"이 아닌 경우에만 해당 소리의 색상 사용 (탐지 성공)
     if (widget.soundName != null && widget.soundName != "Unknown" && widget.soundName != "알 수 없음" && widget.soundName != "UNKNOWN") {
       switch (widget.soundName) {

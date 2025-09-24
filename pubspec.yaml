@@ -48,6 +48,9 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   permission_handler: ^12.0.1
+  device_info_plus: ^12.1.0
+  vibration:
+    path: packages/vibration
 
 dev_dependencies:
   flutter_test:

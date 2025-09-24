@@ -4,6 +4,7 @@ import 'package:frontend/shared_components/bottom_navigation.dart';
 import 'package:frontend/shared_components/header_navigation.dart';
 import 'package:frontend/custom/basic_screen.dart';
 import 'package:frontend/custom/before_login.dart';
+import 'package:frontend/alarm/alarm_set.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -38,7 +39,7 @@ class _MainPageState extends State<MainPage> {
       case 1: // 홈 탭
         return const HomeScreen();
       case 2: // 옵션 탭
-        return const BeforeLogin(); // 임시로 BeforeLogin 사용
+        return const AlarmSetScreen();
       default:
         return const HomeScreen();
     }
@@ -54,10 +55,12 @@ class _MainPageState extends State<MainPage> {
             Expanded(
               child: _getTabScreen(_selectedTabIndex),
             ),
-            BottomNavigation(
-              selectedTabIndex: _selectedTabIndex,
-              onTabChanged: _onTabChanged,
-            ),
+            // 옵션 탭(2번)과 내소리 탭(0번)일 때는 하단바 숨김
+            if (_selectedTabIndex != 2 && _selectedTabIndex != 0)
+              BottomNavigation(
+                selectedTabIndex: _selectedTabIndex,
+                onTabChanged: _onTabChanged,
+              ),
           ],
         ),
       ),
