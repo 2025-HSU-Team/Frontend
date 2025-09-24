@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/config/app_config.dart';
 import 'package:frontend/login/login.dart';
-
+import 'package:frontend/shared_components/bottom_navigation.dart';
 
 class BeforeLogin extends StatelessWidget {
-  const BeforeLogin({super.key});
+  final int selectedTabIndex;
+  final Function(int)? onTabChanged;
+
+  const BeforeLogin({super.key, this.selectedTabIndex = 1, this.onTabChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +86,11 @@ class BeforeLogin extends StatelessWidget {
             ),
           ),
         ],
+      ),
+
+      bottomNavigationBar: BottomNavigation(
+        selectedTabIndex: selectedTabIndex,
+        onTabChanged: onTabChanged ?? (index) {},
       ),
     );
   }

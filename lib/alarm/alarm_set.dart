@@ -33,11 +33,6 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
       "image": "assets/images/babycry.png",
       "color": Colors.blue,
     },
-    "HUMAN_LAUGH": {
-      "label": "사람 웃음 소리",
-      "image": "assets/images/smile.png",
-      "color": Colors.blue,
-    },
     "PHONE_RING": {
       "label": "전화 벨소리",
       "image": "assets/images/phonecall.png",
@@ -68,16 +63,8 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
       "image": "assets/images/emergency.png",
       "color": Colors.red,
     },
-    "KNOCK": {
-      "label": "노크 소리",
-      "image": "assets/images/knock.png",
-      "color": Colors.green,
-    },
-    "MICROWAVE": {
-      "label": "전자레인지 소리",
-      "image": "assets/images/microwave.png",
-      "color": Colors.red,
-    },
+
+
   };
 
   //커스텀 소리 리스트
@@ -321,6 +308,8 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
                               emoji: sound["emoji"],
                               color: _mapColor(sound["color"]),
                             ),
+
+                        const SizedBox(height: 40,)
                       ],
                     ),
                   ),
@@ -330,28 +319,7 @@ class _AlarmSetScreenState extends State<AlarmSetScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigation(
-        selectedTabIndex: _selectedTabIndex,
-        onTabChanged: (index) {
-          if (index == 0) {
-            // 내소리 → MainPage로 이동 (내소리 탭 선택)
-            Navigator.pushAndRemoveUntil(
 
-              context,
-              MaterialPageRoute(builder: (context) => const MainPage()),
-              (route) => false,
-            );
-            // MainPage에서 내소리 탭을 선택하도록 상태 전달 필요
-          } else if (index == 1) {
-            // 홈 → MainPage
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const MainPage()),
-              (route) => false,
-            );
-          }
-        },
-      ),
     );
   }
 
