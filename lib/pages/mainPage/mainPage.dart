@@ -4,6 +4,7 @@ import 'package:frontend/shared_components/bottom_navigation.dart';
 import 'package:frontend/shared_components/header_navigation.dart';
 import 'package:frontend/custom/basic_screen.dart';
 import 'package:frontend/custom/before_login.dart';
+import 'package:frontend/alarm/alarm_set.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -38,7 +39,7 @@ class _MainPageState extends State<MainPage> {
       case 1: // 홈 탭
         return const HomeScreen();
       case 2: // 옵션 탭
-        return const BeforeLogin(); // 임시로 BeforeLogin 사용
+        return const AlarmSetScreen();
       default:
         return const HomeScreen();
     }
