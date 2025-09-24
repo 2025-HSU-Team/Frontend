@@ -8,6 +8,7 @@ import '../models/detection_state.dart';
 // 서비스들
 import '../services/audio_service.dart';
 import '../services/backend_service.dart';
+import '../services/vibration_service.dart';
 
 // 위젯들
 import '../widgets/sound_detection_animation.dart';
@@ -38,6 +39,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Timer? _resultTimer;
   Color? _detectionColor; // 인식중일 때 사용할 랜덤 색상
   bool _isAnalyzing = false; // 분석 중 플래그 (중복 통신 방지)
+  String? _detectedEmoji; // 감지된 커스텀 소리의 이모지
+  String? _detectedSoundColor; // 감지된 커스텀 소리의 색상
 
   // 상수
   static const int _detectionCooldown = 5;
@@ -119,10 +122,21 @@ class _HomeScreenState extends State<HomeScreen> {
     
     setState(() {
       _detectedSoundName = result['soundName'];
+      _detectedEmoji = result['emoji']; // 커스텀 소리 이모지 저장
+      _detectedSoundColor = result['color']; // 커스텀 소리 색상 저장
       _lastDetectionResult = result; // 전체 응답 저장
       // Unknown이 아닌 경우에만 결과 표시
       _showResult = result['soundName'] != 'Unknown' && result['soundName'] != '알 수 없음';
     });
+    
+    // 알림이 활성화되어 있고 Unknown이 아닌 경우 진동 실행
+    if (result['alarmEnabled'] == true && 
+        result['soundName'] != 'Unknown' && 
+        result['soundName'] != '알 수 없음') {
+      final vibrationLevel = result['vibration'] ?? 1;
+      print('📳 진동 실행: ${result['soundName']} (레벨: $vibrationLevel)');
+      VibrationService().vibrate(vibrationLevel);
+    }
     
     // Unknown이 아닌 경우에만 7초 후 결과 숨김
     if (_showResult) {
@@ -133,6 +147,8 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() {
             _showResult = false;
             _detectedSoundName = null; // 결과 초기화
+            _detectedEmoji = null; // 이모지 초기화
+            _detectedSoundColor = null; // 색상 초기화
             // 7초 후 새로운 랜덤 색상 선택
             _detectionColor = _getRandomColor();
             print('🎨 새로운 랜덤 색상 선택: ${_detectionColor!.value.toRadixString(16)}');
@@ -273,12 +289,13 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
                     // 상단 아이콘
                     Container(
                       margin: const EdgeInsets.only(bottom: 30),
@@ -297,6 +314,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       isDetecting: _isDetecting,
                       soundName: _detectedSoundName, // 감지된 소리명 전달
                       detectionColor: _detectionColor, // 인식중일 때 사용할 랜덤 색상
+                      emoji: _detectedEmoji, // 커스텀 소리 이모지 전달
+                      soundColor: _detectedSoundColor, // 커스텀 소리 색상 전달
                     ),
                     const SizedBox(height: 30),
                     
@@ -377,7 +396,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: Colors.grey,
                       ),
                     ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

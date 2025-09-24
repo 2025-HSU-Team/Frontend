@@ -108,14 +108,21 @@ class BackendService {
       final Map<String, dynamic> json = jsonDecode(body);
       
       if (json['isSuccess'] == true && json['data'] != null) {
-        final soundName = json['data']['soundName'] ?? '알 수 없음';
-        final confidence = json['data']['confidence'] ?? 0.0;
+        final data = json['data'];
+        final soundName = data['soundName'] ?? '알 수 없음';
+        final confidence = data['similarity'] ?? data['confidence'] ?? 0.0;
         
         print('✅ 소리 인식 성공: $soundName (신뢰도: $confidence)');
         
+        // 백엔드에서 보낸 모든 데이터를 전달
         onSoundDetected?.call({
           'soundName': soundName,
           'confidence': confidence,
+          'emoji': data['emoji'], // 이모지 추가
+          'color': data['color'], // 색상 추가
+          'similarity': data['similarity'], // 유사도 추가
+          'alarmEnabled': data['alarmEnabled'], // 알림 활성화 추가
+          'vibration': data['vibration'], // 진동 추가
           'isSuccess': true,
         });
         
