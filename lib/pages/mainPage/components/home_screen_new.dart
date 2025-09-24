@@ -353,6 +353,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       currentDb: _currentDb,
                       isDetecting: _isDetecting,
                       detectionColor: _detectionColor, // 인식중일 때 사용할 랜덤 색상
+                      detectedSoundName: _detectedSoundName, // 감지된 소리명
+                      detectedEmoji: _detectedEmoji, // 감지된 커스텀 소리의 이모지
                     ),
                     const SizedBox(height: 20),
                     

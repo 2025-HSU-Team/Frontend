@@ -6,6 +6,8 @@ class DetectionStatusWidget extends StatefulWidget {
   final double currentDb;
   final bool isDetecting;
   final Color? detectionColor; // 인식중일 때 사용할 랜덤 색상
+  final String? detectedSoundName; // 감지된 소리명
+  final String? detectedEmoji; // 감지된 커스텀 소리의 이모지
 
   const DetectionStatusWidget({
     super.key,
@@ -13,6 +15,8 @@ class DetectionStatusWidget extends StatefulWidget {
     required this.currentDb,
     required this.isDetecting,
     this.detectionColor, // 옵셔널 파라미터
+    this.detectedSoundName, // 옵셔널 파라미터
+    this.detectedEmoji, // 옵셔널 파라미터
   });
 
   @override
@@ -43,6 +47,16 @@ class _DetectionStatusWidgetState extends State<DetectionStatusWidget>
     } else if (!widget.isDetecting && oldWidget.isDetecting) {
       _stopDetectionAnimation();
     }
+    
+    // 감지된 소리 정보가 변경되었을 때 텍스트 업데이트
+    if (widget.detectedSoundName != oldWidget.detectedSoundName ||
+        widget.detectedEmoji != oldWidget.detectedEmoji) {
+      if (!widget.isDetecting) {
+        setState(() {
+          _detectionText = _getStatusText();
+        });
+      }
+    }
   }
 
   @override
@@ -61,9 +75,76 @@ class _DetectionStatusWidgetState extends State<DetectionStatusWidget>
     _textController.removeListener(_updateDetectionText);
     _textController.stop();
     setState(() {
-      _detectionText = '자동 탐지 대기 중';
+      _detectionText = _getStatusText();
       _dotCount = 0;
     });
+  }
+  
+  // 상태에 따른 텍스트 결정
+  String _getStatusText() {
+    // 백엔드에서 올바른 응답이 전달되었을 때
+    if (widget.detectedSoundName != null && 
+        widget.detectedSoundName != "Unknown" && 
+        widget.detectedSoundName != "알 수 없음") {
+      
+      // 커스텀 소리일 경우 (이모지가 있는 경우)
+      if (widget.detectedEmoji != null && widget.detectedEmoji!.isNotEmpty) {
+        return widget.detectedSoundName!; // 커스텀 소리명 반환
+      }
+      
+      // 기본 소리일 경우 한글 소리명 반환
+      return _getKoreanSoundName(widget.detectedSoundName!);
+    }
+    
+    // 그 외의 경우 기본 대기 상태
+    return '자동 탐지 대기 중';
+  }
+  
+  // 영어 소리명을 한글 소리명으로 변환
+  String _getKoreanSoundName(String soundName) {
+    switch (soundName) {
+      // 빨간색 (비상/경고)
+      case "FIRE_ALARM":
+      case "Fire/Smoke Alarm":
+      case "Fire Alarm":
+        return "화재 경보 소리";
+      case "SIREN":
+      case "Siren":
+      case "Emergency":
+        return "비상 경보음";
+      case "CAR_HORN":
+      case "Car Honk":
+      case "Car Horn":
+        return "자동차 경적 소리";
+      
+      // 초록색 (일상)
+      case "PHONE_RING":
+      case "Phone Ring":
+        return "전화 벨소리";
+      case "DOOR_OPEN_CLOSE":
+      case "Door In-Use":
+      case "Door":
+        return "문 여닫는 소리";
+      case "DOORBELL":
+      case "Doorbell":
+        return "초인종 소리";
+      case "Knocking":
+        return "노크 소리";
+      
+      // 파란색 (동물)
+      case "DOG_BARK":
+      case "Dog Bark":
+        return "개 짖는 소리";
+      case "CAT_MEOW":
+      case "Cat Meow":
+        return "고양이 우는 소리";
+      case "BABY_CRY":
+      case "Baby Cry":
+        return "아기 우는 소리";
+      
+      default:
+        return soundName; // 변환되지 않은 경우 원본 반환
+    }
   }
 
   void _updateDetectionText() {
