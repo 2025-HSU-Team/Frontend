@@ -383,27 +383,7 @@ class _AddSoundsState extends State<AddSounds>
                               style: const TextStyle(fontSize: 18)),
                         ),
                         const Spacer(),
-                        OutlinedButton(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            side:
-                            const BorderSide(color: Color(0xFFCBCBCB)),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            minimumSize: const Size(65, 26),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: const Text(
-                            "소리명으로 보기",
-                            style: TextStyle(
-                              fontSize: 8,
-                              fontWeight: FontWeight.w500,
-                              color: Color(0xFF3F3E3E),
-                            ),
-                          ),
-                        ),
+
                       ],
                     ),
 
